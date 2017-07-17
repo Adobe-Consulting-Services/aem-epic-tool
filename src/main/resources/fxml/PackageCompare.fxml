@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="500.0" minWidth="400.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.adobe.acs.epic.controller.PackageCompareController">
+    <children>
+        <BorderPane>
+            <left>
+                <Label fx:id="compareLabel" text="Comparison" BorderPane.alignment="CENTER">
+                    <font>
+                        <Font size="16.0" />
+                    </font>
+                </Label>
+            </left>
+            <right>
+                <MenuButton alignment="CENTER" contentDisplay="TEXT_ONLY" mnemonicParsing="false" styleClass="hamburger" text="%hamburger" BorderPane.alignment="CENTER">
+                    <items>
+                        <MenuItem mnemonicParsing="false" onAction="#copyAction" text="%copyToClipboard" />
+                        <MenuItem mnemonicParsing="false" onAction="#exportAction" text="%export" />
+                    </items>
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                </MenuButton>
+            </right>
+        </BorderPane>
+        <StackPane VBox.vgrow="ALWAYS">
+            <children>
+                <Accordion fx:id="diffViewPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" visible="false">
+                    <panes>
+                        <TitledPane fx:id="uniqueToLeftPane" animated="false" text="Unique to Left">
+                            <content>
+                                <ListView fx:id="uniqueLeftList" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="200.0" prefWidth="200.0" />
+                            </content>
+                        </TitledPane>
+                        <TitledPane fx:id="uniqueToRightPane" animated="false" text="Unique to Right">
+                            <content>
+                                <ListView fx:id="uniqueRightList" prefHeight="200.0" prefWidth="200.0" />
+                            </content>
+                        </TitledPane>
+                        <TitledPane fx:id="overlapPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Overlaps (changd files)">
+                            <content>
+                                <ListView fx:id="overlapList" prefHeight="200.0" prefWidth="200.0" />
+                            </content>
+                        </TitledPane>
+                        <TitledPane fx:id="commonPane" prefHeight="200.0" prefWidth="200.0" text="Common (no changes)">
+                            <content>
+                                <ListView fx:id="commonList" prefHeight="200.0" prefWidth="200.0" />
+                            </content>
+                        </TitledPane>
+                    </panes>
+                </Accordion>
+                <VBox fx:id="downloadPane" prefHeight="200.0" prefWidth="100.0">
+                    <children>
+                        <Label alignment="TOP_CENTER" maxWidth="1.7976931348623157E308" minWidth="-Infinity" text="%downloading" VBox.vgrow="ALWAYS" />
+                        <ProgressIndicator fx:id="downloadIndicator" progress="0.0" VBox.vgrow="ALWAYS">
+                            <padding>
+                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                            </padding>
+                        </ProgressIndicator>
+                    </children>
+                </VBox>
+            </children>
+        </StackPane>
+    </children>
+    <stylesheets>
+        <URL value="@../styles/Styles.css" />
+    </stylesheets>    
+</VBox>

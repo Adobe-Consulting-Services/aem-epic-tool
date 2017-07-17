@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="480.0" minWidth="640.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.adobe.acs.epic.controller.AppController" stylesheets="@../styles/Styles.css">
+    <children>
+        <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+            <tabs>
+                <Tab fx:id="connectionTab" text="%connection">
+                    <content>
+                        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="5.0">
+                            <children>
+                                <GridPane hgap="5.0" vgap="5.0">
+                                    <columnConstraints>
+                                        <ColumnConstraints halignment="RIGHT" hgrow="NEVER" maxWidth="163.0" minWidth="10.0" prefWidth="72.0" />
+                                        <ColumnConstraints fillWidth="false" halignment="LEFT" hgrow="ALWAYS" maxWidth="265.0" minWidth="10.0" prefWidth="265.0" />
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    </rowConstraints>
+                                    <children>
+                                        <Label text="%hostname" />
+                                        <Label text="%useSSL" GridPane.rowIndex="1" />
+                                        <Label text="%username" GridPane.rowIndex="2" />
+                                        <Label text="%password" GridPane.rowIndex="3" />
+                                        <TextField fx:id="hostField" promptText="localhost:4502" GridPane.columnIndex="1" />
+                                        <CheckBox fx:id="sslCheckbox" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                        <TextField fx:id="usernameField" promptText="admin" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                        <PasswordField fx:id="passwordField" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    </children>
+                                </GridPane>
+                                <Label fx:id="connectionVerificationLabel" prefHeight="16.0" prefWidth="581.0" text="Connection not verified" VBox.vgrow="NEVER">
+                                    <VBox.margin>
+                                        <Insets top="5.0" />
+                                    </VBox.margin>
+                                </Label>
+                            </children>
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="%packages">
+                    <content>
+                        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <StackPane VBox.vgrow="NEVER">
+                                    <children>
+                                        <ToolBar maxWidth="1.7976931348623157E308">
+                                            <items>
+                                                <CheckBox fx:id="showProductPackages" mnemonicParsing="false" selected="true" text="%showProduct" />
+                                                <CheckBox fx:id="showCustomPackages" mnemonicParsing="false" selected="true" text="%showCustom" />
+                                                <CheckBox fx:id="showUninstalledPackages" mnemonicParsing="false" selected="true" text="%showUninstalled" />
+                                                <Separator orientation="VERTICAL" />
+                                            </items>
+                                        </ToolBar>
+                                        <BorderPane>
+                                            <right>
+                                                <MenuButton mnemonicParsing="false" styleClass="hamburger" text="%hamburger" BorderPane.alignment="CENTER">
+                                                    <items>
+                                                        <MenuItem mnemonicParsing="false" text="%export" onAction="#exportPackagesButtonPressed" />
+                                                        <MenuItem mnemonicParsing="false" text="%refresh_packages" onAction="#readPackages"/>
+                                                    </items>
+                                                </MenuButton>
+                                            </right>
+                                        </BorderPane>
+                                    </children>
+                                </StackPane>
+                                <TableView fx:id="packageTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="125.0" prefWidth="-1.0" text="%group" />
+                                        <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="-1.0" text="%package" />
+                                        <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="-1.0" text="%size" />
+                                        <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="90.0" prefWidth="-1.0" text="%version" />
+                                        <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="165.0" prefWidth="-1.0" text="%modified" />
+                                        <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="165.0" prefWidth="-1.0" text="%unpacked" />
+                                    </columns>
+                                </TableView>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </children>
+</VBox>

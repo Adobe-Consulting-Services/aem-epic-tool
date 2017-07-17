@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="625.0" minWidth="400.0" stylesheets="@../styles/Styles.css" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.adobe.acs.epic.controller.PackageInfoController">
+    <children>
+        <TabPane fx:id="tabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="100.0" minWidth="100.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+            <tabs>
+                <Tab fx:id="generalTab" text="General">
+                    <content>
+                  <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                     <children>
+                                <GridPane maxWidth="1.7976931348623157E308" vgap="5.0">
+                                    <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    </rowConstraints>
+                                    <children>
+                                        <Label text="%package" GridPane.rowIndex="1" />
+                                        <Label text="%group" />
+                                        <Label text="%downloadLink" GridPane.rowIndex="2" />
+                                        <Label text="%size" GridPane.rowIndex="4" />
+                                        <Label text="%version" GridPane.rowIndex="3" />
+                                        <Label text="%created" GridPane.rowIndex="5" />
+                                        <Label text="%modified" GridPane.rowIndex="6" />
+                                        <Label text="%unpacked" GridPane.rowIndex="7" />
+                                        <Label fx:id="groupLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
+                                        <Label fx:id="packageLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
+                                        <Label fx:id="downloadLinkLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" />
+                                        <Label fx:id="sizeLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" />
+                                        <Label fx:id="versionLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" />
+                                        <Label fx:id="createdLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" />
+                                        <Label fx:id="modifiedLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="6" />
+                                        <Label fx:id="unpackedLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="7" />
+                                    </children>
+                                </GridPane>
+                        <VBox fx:id="otherVersionsPane" VBox.vgrow="ALWAYS">
+                           <children>
+                              <Separator prefWidth="200.0" />
+                              <Label text="%otherVersions">
+                                 <font>
+                                    <Font size="16.0" />
+                                 </font>
+                              </Label>
+                              <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                                 <content>
+                                    <ListView fx:id="otherVersionsList" minHeight="100.0" prefHeight="200.0" />
+                                 </content>
+                              </ScrollPane>
+                           </children>
+                        </VBox>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="analysisTab" text="Analysis">
+                    <content>
+                        <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                    <children>
+                                        <BorderPane fx:id="packageConfirmPanel" prefHeight="200.0" prefWidth="200.0" visible="false">
+                                            <center>
+                                                <FlowPane columnHalignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER">
+                                                    <children>
+                                                        <Label prefHeight="63.0" prefWidth="200.0" text="%largePackageConfirmation" wrapText="true">
+                                                            <FlowPane.margin>
+                                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                            </FlowPane.margin>
+                                                        </Label>
+                                                        <Button mnemonicParsing="false" onAction="#packageDownloadOk" text="%ok">
+                                                            <FlowPane.margin>
+                                                                <Insets left="5.0" />
+                                                            </FlowPane.margin>
+                                                        </Button>
+                                                        <Button mnemonicParsing="false" onAction="#packageDownloadCancel" text="%cancel">
+                                                            <FlowPane.margin>
+                                                                <Insets left="5.0" />
+                                                            </FlowPane.margin>
+                                                        </Button>
+                                                    </children>
+                                                </FlowPane>
+                                            </center>
+                                        </BorderPane>
+                                        <BorderPane fx:id="downloadingPane" prefHeight="200.0" prefWidth="200.0" visible="false">
+                                            <center>
+                                                <ProgressIndicator fx:id="downloadProgressIndicator" progress="0.0" BorderPane.alignment="CENTER">
+                                                    <BorderPane.margin>
+                                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                                    </BorderPane.margin>
+                                                </ProgressIndicator>
+                                            </center>
+                                            <top>
+                                                <Label text="%downloading" BorderPane.alignment="CENTER" />
+                                            </top>
+                                        </BorderPane>
+                                        <VBox fx:id="analysisPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" StackPane.alignment="TOP_CENTER">
+                                            <children>
+                                                <GridPane VBox.vgrow="NEVER">
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                    </columnConstraints>
+                                                    <rowConstraints>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                                    </rowConstraints>
+                                                    <children>
+                                                        <Label fx:id="downloadFileLabel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onMouseClicked="#browseToDownloadedFile" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="SOMETIMES" />
+                                                        <Label fx:id="folderCountLabel" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="SOMETIMES" />
+                                                        <Label fx:id="fileCountLabel" maxWidth="1.7976931348623157E308" prefWidth="250.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" />
+                                                        <Label text="%downloadedFile" />
+                                                        <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="%folderCount" GridPane.rowIndex="1" />
+                                                        <Label text="%fileCount" GridPane.rowIndex="2" />
+                                                    </children>
+                                                </GridPane>
+                                                <Separator prefWidth="200.0" />
+                                                <Accordion maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                                                    <panes>
+                                                        <TitledPane animated="false" text="%summaryByRoot">
+                                                            <content>
+                                                <StackPane>
+                                                   <children>
+                                                                        <TableView fx:id="rootSummaryTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                                                                            <columns>
+                                                                                <TableColumn fx:id="rootSummaryCol1" editable="false" maxWidth="1.7976931348623157E308" minWidth="250.0" prefWidth="-1.0" text="%pathBase" />
+                                                                                <TableColumn fx:id="rootSummaryCol2" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="-1.0" text="%fileCount" />
+                                                                            </columns>
+                                                                        </TableView>
+                                                      <AnchorPane prefHeight="200.0" prefWidth="200.0">
+                                                         <children>
+                                                            <MenuButton mnemonicParsing="false" styleClass="hamburger" text="%hamburger" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                              <items>
+                                                                <MenuItem mnemonicParsing="false" onAction="#exportRootSummaries" text="%export" />
+                                                              </items>
+                                                            </MenuButton>
+                                                         </children>
+                                                      </AnchorPane>
+                                                   </children>
+                                                </StackPane>
+                                                            </content>
+                                                        </TitledPane>
+                                                        <TitledPane animated="false" text="%summaryByType">
+                                                            <content>
+                                                <StackPane>
+                                                   <children>
+                                                                        <TableView fx:id="typeSummaryTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                                                                            <columns>
+                                                                                <TableColumn fx:id="typeSummaryCol1" maxWidth="1.7976931348623157E308" minWidth="250.0" prefWidth="-1.0" text="%type" />
+                                                                                <TableColumn fx:id="typeSummaryCol2" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="-1.0" text="%count" />
+                                                                            </columns>
+                                                                        </TableView>
+                                                      <AnchorPane prefHeight="200.0" prefWidth="200.0">
+                                                         <children>
+                                                            <MenuButton mnemonicParsing="false" styleClass="hamburger" text="%hamburger" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                                              <items>
+                                                                <MenuItem mnemonicParsing="false" onAction="#exportTypeSummaries" text="%export" />
+                                                              </items>
+                                                            </MenuButton>
+                                                         </children>
+                                                      </AnchorPane>
+                                                   </children>
+                                                </StackPane>
+                                                            </content>
+                                                        </TitledPane>
+                                                    </panes>
+                                                </Accordion>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </StackPane>
+                            </children>
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </padding>
+                        </AnchorPane>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </children>
+</VBox>

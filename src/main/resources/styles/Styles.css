@@ -1,0 +1,15 @@
+.button {
+    -fx-font-weight: bold;
+}
+
+.hamburger {
+    -fx-background-color : none;
+}
+
+.hamburger > .arrow-button {
+    -fx-padding: 0;
+}
+
+.hamburger > .arrow-button > .arrow {
+    -fx-padding: 0;
+}
