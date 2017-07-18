@@ -1,14 +1,26 @@
 package com.adobe.acs.epic.model;
 
+import com.adobe.acs.epic.DataUtils;
 import com.adobe.acs.epic.PackageOps;
 import com.adobe.acs.model.pkglist.PackageType;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * Compare one or more packages
@@ -59,8 +71,8 @@ public class PackageComparison {
                         LinkedHashMap::new
                 ));
     }
-    
-    public Collection<String> getFilesUniqueForPackage(PackageType pkg ) {
+
+    public Collection<String> getFilesUniqueForPackage(PackageType pkg) {
         return comparison.entrySet().stream()
                 .filter((e) -> {
                     Map<Long, Set<FileContents>> versions = e.getValue();
@@ -72,7 +84,7 @@ public class PackageComparison {
                         return false;
                     }
                 })
-                .map(e->e.getKey())
+                .map(e -> e.getKey())
                 .collect(Collectors.toList());
     }
 
@@ -88,7 +100,77 @@ public class PackageComparison {
                         return false;
                     }
                 })
-                .map(e->e.getKey())
+                .map(e -> e.getKey())
                 .collect(Collectors.toList());
-    }    
+    }
+
+    public void exportMasterReport(File saveFile) throws IOException {
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        List<PackageContents> contents = new ArrayList<>(comparedPackages);
+        List<PackageType> packages = comparedPackages.stream()
+                .map(PackageContents::getSourcePackage).collect(Collectors.toList());
+        String[] headers = new String[]{
+            "Key", "Group", "Package Name",
+            "Package File", "Size", "Version",
+            "Created", "Created By",
+            "Last Modified", "Modified By",
+            "Last Unpacked", "Unpacked By"
+        };
+        DataUtils.addSheet("Summary", workbook, packages, headers,
+                pkg -> (char) ('A' + packages.indexOf(pkg)),
+                PackageType::getGroup, PackageType::getName,
+                PackageType::getDownloadName, PackageType::getSize,
+                PackageOps::getInformativeVersion,
+                PackageType::getCreated, PackageType::getCreatedBy,
+                PackageType::getLastModified, PackageType::getLastModifiedBy,
+                PackageType::getLastUnpacked, PackageType::getLastUnpackedBy
+        );
+
+        headers = new String[packages.size() + 1];
+        for (int i = 0; i < packages.size(); i++) {
+            headers[i + 1] = String.valueOf((char) 'A' + i);
+        }
+
+        headers[0] = "Path";
+        Function<Map.Entry<String, Map<PackageContents, Integer>>, Object>[] cols
+                = new Function[packages.size() + 1];
+        cols[0] = e -> e.getKey();
+        IntStream.range(0, contents.size()).forEach(i -> cols[i + 1] = e -> e.getValue().get(contents.get(i)));
+        DataUtils.addSheet("Root paths", workbook, getAllBaseCounts().entrySet(), headers, cols);
+        
+        headers[0] = "Type";
+        IntStream.range(0, contents.size()).forEach(i -> cols[i + 1] = e -> e.getValue().get(contents.get(i)));        
+        DataUtils.addSheet("File types", workbook, getAllTypeCounts().entrySet(), headers, cols);
+        
+        FileOutputStream out = new FileOutputStream(saveFile);
+        workbook.write(out);
+        out.flush();
+        out.close();
+    }
+
+    private Map<String, Map<PackageContents, Integer>> getAllBaseCounts() {
+        Map<String, Map<PackageContents, Integer>> summary = new TreeMap<>();
+        comparedPackages.forEach(pkg -> {
+            pkg.getBaseCounts().forEach((path, count) -> {
+                if (!summary.containsKey(path)) {
+                    summary.put(path, new HashMap<>());
+                }
+                summary.get(path).put(pkg, count);
+            });
+        });
+        return summary;
+    }
+
+    private Map<String, Map<PackageContents, Integer>> getAllTypeCounts() {
+        Map<String, Map<PackageContents, Integer>> summary = new TreeMap<>();
+        comparedPackages.forEach(pkg -> {
+            pkg.getFilesByType().forEach((type, files) -> {
+                if (!summary.containsKey(type)) {
+                    summary.put(type, new HashMap<>());
+                }
+                summary.get(type).put(pkg, files.size());
+            });
+        });
+        return summary;
+    }
 }

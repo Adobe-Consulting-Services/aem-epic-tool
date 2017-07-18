@@ -20,6 +20,7 @@ import com.adobe.acs.epic.DataUtils;
 import com.adobe.acs.epic.EpicApp;
 import com.adobe.acs.epic.PackageOps;
 import com.adobe.acs.epic.model.CrxPackage;
+import com.adobe.acs.epic.model.PackageComparison;
 import com.adobe.acs.model.pkglist.CrxType;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.File;
@@ -37,16 +38,25 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.binding.DoubleBinding;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -100,6 +110,9 @@ public class AppController {
     @FXML
     private TableView<PackageType> packageTable;
 
+    @FXML
+    private MenuItem compareSelectedMenuItem;
+
     ObservableList packageList = FXCollections.observableArrayList();
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -114,6 +127,7 @@ public class AppController {
         assert showCustomPackages != null : "fx:id=\"showCustomPackages\" was not injected: check your FXML file 'App.fxml'.";
         assert showProductPackages != null : "fx:id=\"showProductPackages\" was not injected: check your FXML file 'App.fxml'.";
         assert showUninstalledPackages != null : "fx:id=\"showUninstalledPackages\" was not injected: check your FXML file 'App.fxml'.";
+        assert compareSelectedMenuItem != null : "fx:id=\"compareSelectedMenuItem\" was not injected: check your FXML file 'App.fxml'.";
 
         loginHandler = new AuthHandler(
                 hostField.textProperty(), sslCheckbox.selectedProperty(),
@@ -125,6 +139,10 @@ public class AppController {
         loginHandler.model.loginConfirmedProperty().addListener((confirmedValue, oldValue, newValue) -> this.readPackagesOnce());
         updateConnectionTabStyle();
 
+        packageTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        packageTable.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends PackageType> c) -> {
+            compareSelectedMenuItem.setDisable(packageTable.getSelectionModel().getSelectedItems().size() < 2);
+        });
         packageTable.setItems(packageList);
         packageTable.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("group"));
         packageTable.getColumns().get(1).setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -226,10 +244,80 @@ public class AppController {
     }
 
     private void applyFilters() {
-        packageList.setAll(
-                ApplicationState.getInstance().getMasterList().stream()
-                        .filter(pkg -> filters.stream().allMatch(f -> f.apply(pkg)))
-                        .collect(Collectors.toList())
-        );
+        if (ApplicationState.getInstance().getMasterList() != null) {
+            packageList.setAll(
+                    ApplicationState.getInstance().getMasterList().stream()
+                            .filter(pkg -> filters.stream().allMatch(f -> f.apply(pkg)))
+                            .collect(Collectors.toList())
+            );
+        }
+    }
+
+    @FXML
+    private void compareAll(ActionEvent evt) {
+        performMasterComparison(packageList);
+    }
+
+    @FXML
+    private void compareSelected(ActionEvent evt) {
+        performMasterComparison(packageTable.getSelectionModel().getSelectedItems());
+    }
+
+    private void performMasterComparison(List<PackageType> pkgs) {
+        PackageComparison compare = new PackageComparison();
+        DoubleProperty[] downloadProgress = new DoubleProperty[pkgs.size()];
+        DoubleBinding overallProgress = null;
+        for (int i = 0; i < pkgs.size(); i++) {
+            downloadProgress[i] = new SimpleDoubleProperty(PackageOps.hasPackageContents(pkgs.get(i)) ? 1.0 : 0.0);
+            if (i == 1) {
+                overallProgress = downloadProgress[0].add(downloadProgress[1]);
+            } else if (i > 1) {
+                overallProgress = overallProgress.add(downloadProgress[i]);
+            }
+        }
+        overallProgress = overallProgress.multiply(1.0 / pkgs.size());
+
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("Preparing report");
+        alert.setHeaderText("Downloads in progress");
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setPrefSize(200, 200);
+        progressIndicator.progressProperty().bind(overallProgress);
+        alert.getDialogPane().setContent(progressIndicator);
+        alert.show();
+
+        new Thread(() -> {
+            for (int i = 0; i < pkgs.size(); i++) {
+                try {
+                    compare.observe(PackageOps.getPackageContents(pkgs.get(i), downloadProgress[i]));
+                } catch (IOException ex) {
+                    Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, null, ex);
+                    Alert error = new Alert(AlertType.ERROR);
+                    error.setTitle("Download error");
+                    error.setHeaderText("Download error");
+                    error.setContentText(ex.getMessage());
+                    error.show();
+                }
+            }
+            Platform.runLater(() -> {
+                alert.close();
+                FileChooser saveChooser = new FileChooser();
+                saveChooser.setTitle("Export (Save) data");
+                saveChooser.setInitialFileName("comparison.xlsx");
+                File saveFile = saveChooser.showSaveDialog(null);
+                if (saveFile != null) {
+                    try {
+                        compare.exportMasterReport(saveFile);
+                    } catch (IOException ex) {
+                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, null, ex);
+                        Alert error = new Alert(AlertType.ERROR);
+                        error.setTitle("Report generation error");
+                        error.setHeaderText("Report generation error");
+                        error.setContentText(ex.getMessage());
+                        error.show();
+                    }
+                }
+            });
+        }).start();
     }
 }

@@ -74,7 +74,12 @@ public class DataUtils {
 
     public static <T> void exportSpreadsheet(OutputStream target, Collection<T> data, String[] header, Function<T, Object>... getters) throws IOException {
         XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = workbook.createSheet();
+        addSheet(null, workbook, data, header, getters);
+        workbook.write(target);
+    }
+
+    public static <T> void addSheet(String title, XSSFWorkbook workbook, Collection<T> data, String[] header, Function<T, Object>... getters) {
+        XSSFSheet sheet = title != null ? workbook.createSheet(title) : workbook.createSheet();
         int headerRows = 0;
         if (header != null) {
             headerRows++;
@@ -102,7 +107,6 @@ public class DataUtils {
                 }
             }
         }
-        workbook.write(target);
     }
 
     public static <T> Stream<T> enumerationAsStream(Enumeration<T> e) {

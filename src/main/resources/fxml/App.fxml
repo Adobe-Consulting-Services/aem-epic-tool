@@ -16,13 +16,13 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
 
-<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="480.0" minWidth="640.0" stylesheets="@../styles/Styles.css" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.adobe.acs.epic.controller.AppController">
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="480.0" stylesheets="@../styles/Styles.css" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.adobe.acs.epic.controller.AppController">
     <children>
         <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
             <tabs>
@@ -80,6 +80,8 @@
                                                 <MenuButton mnemonicParsing="false" styleClass="hamburger" text="%hamburger" BorderPane.alignment="CENTER">
                                                     <items>
                                                         <MenuItem mnemonicParsing="false" onAction="#exportPackagesButtonPressed" text="%export" />
+                                                        <MenuItem mnemonicParsing="false" onAction="#compareAll" text="%compareAll" />
+                                                        <MenuItem fx:id="compareSelectedMenuItem" mnemonicParsing="false" onAction="#compareSelected" text="%compareSelected" />
                                                         <MenuItem mnemonicParsing="false" onAction="#readPackages" text="%refresh_packages" />
                                                     </items>
                                                 </MenuButton>
