@@ -291,12 +291,15 @@ public class AppController {
                 try {
                     compare.observe(PackageOps.getPackageContents(pkgs.get(i), downloadProgress[i]));
                 } catch (IOException ex) {
-                    Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, null, ex);
-                    Alert error = new Alert(AlertType.ERROR);
-                    error.setTitle("Download error");
-                    error.setHeaderText("Download error");
-                    error.setContentText(ex.getMessage());
-                    error.show();
+                    final PackageType pkg = pkgs.get(i);
+                    Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, "Error downloading package "+pkg.getName(), ex);
+                    Platform.runLater(() -> {
+                        Alert error = new Alert(AlertType.ERROR);
+                        error.setTitle("Download error");
+                        error.setHeaderText("Download error");
+                        error.setContentText("Error downloading " + pkg.getName() + " : " + ex.getMessage());
+                        error.show();
+                    });
                 }
             }
             Platform.runLater(() -> {
@@ -310,11 +313,13 @@ public class AppController {
                         compare.exportMasterReport(saveFile);
                     } catch (IOException ex) {
                         Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, null, ex);
-                        Alert error = new Alert(AlertType.ERROR);
-                        error.setTitle("Report generation error");
-                        error.setHeaderText("Report generation error");
-                        error.setContentText(ex.getMessage());
-                        error.show();
+                        Platform.runLater(() -> {
+                            Alert error = new Alert(AlertType.ERROR);
+                            error.setTitle("Report generation error");
+                            error.setHeaderText("Report generation error");
+                            error.setContentText(ex.getMessage());
+                            error.show();
+                        });
                     }
                 }
             });
