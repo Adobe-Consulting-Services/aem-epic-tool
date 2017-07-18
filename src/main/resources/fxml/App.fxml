@@ -19,7 +19,6 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="480.0" stylesheets="@../styles/Styles.css" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.adobe.acs.epic.controller.AppController">
@@ -68,27 +67,23 @@
                     <content>
                         <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                             <children>
-                                <StackPane VBox.vgrow="NEVER">
-                                    <children>
-                                        <ToolBar maxWidth="1.7976931348623157E308">
-                                            <items>
-                                                <CheckBox fx:id="showProductPackages" mnemonicParsing="false" selected="true" text="%showProduct" />
-                                                <CheckBox fx:id="showCustomPackages" mnemonicParsing="false" selected="true" text="%showCustom" />
-                                                <CheckBox fx:id="showUninstalledPackages" mnemonicParsing="false" selected="true" text="%showUninstalled" />
-                                                <Separator orientation="VERTICAL" />
-                                                <Pane HBox.hgrow="ALWAYS" />
-                                                <MenuButton mnemonicParsing="false" styleClass="hamburger" text="%hamburger" BorderPane.alignment="CENTER">
-                                                    <items>
-                                                        <MenuItem mnemonicParsing="false" onAction="#exportPackagesButtonPressed" text="%export" />
-                                                        <MenuItem mnemonicParsing="false" onAction="#compareAll" text="%compareAll" />
-                                                        <MenuItem fx:id="compareSelectedMenuItem" mnemonicParsing="false" onAction="#compareSelected" text="%compareSelected" />
-                                                        <MenuItem mnemonicParsing="false" onAction="#readPackages" text="%refresh_packages" />
-                                                    </items>
-                                                </MenuButton>
-                                            </items>
-                                        </ToolBar>
-                                    </children>
-                                </StackPane>
+                                  <ToolBar maxWidth="1.7976931348623157E308">
+                                      <items>
+                                          <CheckBox fx:id="showProductPackages" mnemonicParsing="false" selected="true" text="%showProduct" />
+                                          <CheckBox fx:id="showCustomPackages" mnemonicParsing="false" selected="true" text="%showCustom" />
+                                          <CheckBox fx:id="showUninstalledPackages" mnemonicParsing="false" selected="true" text="%showUninstalled" />
+                                          <Separator orientation="VERTICAL" />
+                                          <Pane HBox.hgrow="ALWAYS" />
+                                          <MenuButton mnemonicParsing="false" styleClass="hamburger" text="%hamburger" BorderPane.alignment="CENTER">
+                                              <items>
+                                                  <MenuItem mnemonicParsing="false" onAction="#exportPackagesButtonPressed" text="%export" />
+                                                  <MenuItem mnemonicParsing="false" onAction="#compareAll" text="%compareAll" />
+                                                  <MenuItem fx:id="compareSelectedMenuItem" disable="true" mnemonicParsing="false" onAction="#compareSelected" text="%compareSelected" />
+                                                  <MenuItem mnemonicParsing="false" onAction="#readPackages" text="%refresh_packages" />
+                                              </items>
+                                          </MenuButton>
+                                      </items>
+                                  </ToolBar>
                                 <TableView fx:id="packageTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
                                     <columns>
                                         <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="125.0" prefWidth="-1.0" text="%group" />
