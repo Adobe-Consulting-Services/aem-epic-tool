@@ -80,6 +80,10 @@ public class DataUtils {
 
     public static <T> void addSheet(String title, XSSFWorkbook workbook, Collection<T> data, String[] header, Function<T, Object>... getters) {
         XSSFSheet sheet = title != null ? workbook.createSheet(title) : workbook.createSheet();
+        if (data.isEmpty()) {
+            sheet.createRow(0).createCell(0).setCellValue("There were no entries");
+            return;
+        }
         int headerRows = 0;
         if (header != null) {
             headerRows++;

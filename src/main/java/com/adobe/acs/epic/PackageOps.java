@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -91,7 +92,10 @@ public class PackageOps {
                                 downloaded += size;
                                 out.write(buffer, 0, size);
                                 if (progress != null && (++updateCounter % 16) == 0) {
-                                    progress.set((double) downloaded / (double) fileSize);
+                                    final double newProgress = (double) downloaded / (double) fileSize;
+                                    Platform.runLater(()->
+                                            progress.set(newProgress)
+                                    );
                                 }
                             }
                             out.flush();

@@ -4,13 +4,12 @@ import com.adobe.acs.epic.DataUtils;
 import com.adobe.acs.epic.PackageOps;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,9 @@ public class PackageComparison {
     }
 
     public void observe(FileContents contents) {
+        if (contents.isDirectory()) {
+            return;
+        }
         if (!comparison.containsKey(contents.getPath())) {
             // No good way to automatically sort keys because the keys are CRC hashes
             // So instead we'll rely on the natural order in which data is processed
@@ -88,17 +90,22 @@ public class PackageComparison {
                 .collect(Collectors.toList());
     }
 
-    public Collection<String> getUnchangedFiles() {
+    /**
+     * Determines which files are in more than one package and there are no
+     * alternate versions for that file.
+     *
+     * @return List of common files
+     */
+    public List<String> getCommonFiles() {
         return comparison.entrySet().stream()
                 .filter((e) -> {
                     Map<Long, Set<FileContents>> versions = e.getValue();
-                    Collection<Set<FileContents>> allFiles = versions.values();
-                    if (allFiles.size() == 1) {
-                        Set<FileContents> f = allFiles.iterator().next();
-                        return (f.size() == comparedPackages.size());
-                    } else {
+                    if (versions.size() > 1) {
                         return false;
                     }
+                    Collection<Set<FileContents>> allFiles = versions.values();
+                    Set<FileContents> f = allFiles.iterator().next();
+                    return (f.size() > 1);
                 })
                 .map(e -> e.getKey())
                 .collect(Collectors.toList());
@@ -128,7 +135,7 @@ public class PackageComparison {
 
         headers = new String[packages.size() + 1];
         for (int i = 0; i < packages.size(); i++) {
-            headers[i + 1] = String.valueOf((char) 'A' + i);
+            headers[i + 1] = String.valueOf((char) ('A' + i));
         }
 
         headers[0] = "Path";
@@ -137,11 +144,41 @@ public class PackageComparison {
         cols[0] = e -> e.getKey();
         IntStream.range(0, contents.size()).forEach(i -> cols[i + 1] = e -> e.getValue().get(contents.get(i)));
         DataUtils.addSheet("Root paths", workbook, getAllBaseCounts().entrySet(), headers, cols);
-        
+
         headers[0] = "Type";
-        IntStream.range(0, contents.size()).forEach(i -> cols[i + 1] = e -> e.getValue().get(contents.get(i)));        
+        IntStream.range(0, contents.size()).forEach(i -> cols[i + 1] = e -> e.getValue().get(contents.get(i)));
         DataUtils.addSheet("File types", workbook, getAllTypeCounts().entrySet(), headers, cols);
-        
+
+        headers[0] = "File path";
+        Function<String, Object>[] commonCols
+                = new Function[packages.size() + 1];
+        commonCols[0] = path -> path;
+        IntStream.range(0, contents.size()).forEach(i -> commonCols[i + 1] = path -> {
+            Set<FileContents> allFiles = comparison.get(path) != null ? comparison.get(path).values().iterator().next() : null;
+            if (allFiles == null) {
+                return null;
+            } else {
+                return allFiles.stream().map(FileContents::getPackageContents).filter(contents.get(i)::equals).count() > 0 ? "X" : null;
+            }
+        });
+        DataUtils.addSheet("Common files", workbook, getCommonFiles(), headers, commonCols);
+
+        Function<Map.Entry<String, Map<Long, Set<FileContents>>>, Object>[] overlapCols = new Function[packages.size() + 1];
+        overlapCols[0] = e -> e.getKey();
+        IntStream.range(0, contents.size()).forEach(i -> overlapCols[i + 1] = e -> {
+            Map<Long, Set<FileContents>> allFiles = e.getValue();
+            int versionNum = 1;
+            for (Iterator<Map.Entry<Long, Set<FileContents>>> iter = allFiles.entrySet().iterator(); iter.hasNext(); versionNum++) {
+                Set<FileContents> versionFiles = iter.next().getValue();
+                if (versionFiles.stream().map(FileContents::getPackageContents)
+                        .filter(contents.get(i)::equals).count() > 0) {
+                    return versionNum;
+                }
+            }
+            return null;
+        });
+        DataUtils.addSheet("Changed files", workbook, getOverlaps(true).entrySet(), headers, overlapCols);
+
         FileOutputStream out = new FileOutputStream(saveFile);
         workbook.write(out);
         out.flush();

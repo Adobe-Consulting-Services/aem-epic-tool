@@ -129,7 +129,7 @@ public class PackageCompareController {
         uniqueLeftList.setItems(FXCollections.observableArrayList(diff.getFilesUniqueForPackage(left)));
         uniqueRightList.setItems(FXCollections.observableArrayList(diff.getFilesUniqueForPackage(right)));
         overlapList.setItems(FXCollections.observableArrayList(diff.getOverlaps(true).keySet()));
-        commonList.setItems(FXCollections.observableArrayList(diff.getUnchangedFiles()));
+        commonList.setItems(FXCollections.observableArrayList(diff.getCommonFiles()));
 
         uniqueToLeftPane.setText(uniqueLeftList.getItems().size() + " unique to " + left.getName() + " : " + left.getVersion());
         uniqueToRightPane.setText(uniqueRightList.getItems().size() + " unique to " + right.getName() + " : " + right.getVersion());
@@ -148,7 +148,7 @@ public class PackageCompareController {
         col = diff.getOverlaps(true).keySet();
         report.append("\n").append(col.size()).append(" files changed between ").append(left.getVersion()).append(" and ").append(right.getVersion()).append("\n");
         col.forEach(f -> report.append(f).append("\n"));
-        col = diff.getUnchangedFiles();
+        col = diff.getCommonFiles();
         report.append("\n").append(col.size()).append(" common files (unchanged)\n");
         col.forEach(f -> report.append(f).append("\n"));
         return report.toString();
