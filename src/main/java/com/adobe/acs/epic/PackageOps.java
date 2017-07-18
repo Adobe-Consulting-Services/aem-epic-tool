@@ -41,6 +41,7 @@ public class PackageOps {
     public static boolean isProduct(PackageType p) {
         String group = p.getGroup().trim().toLowerCase();
         return group.startsWith("adobe/cq")
+                || group.startsWith("adobe/aem6")
                 || group.startsWith("com/adobe/cq")
                 || group.startsWith("day/cq")
                 || group.startsWith("cq/hotfix")
