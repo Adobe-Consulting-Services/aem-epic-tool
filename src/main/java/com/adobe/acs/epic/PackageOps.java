@@ -53,7 +53,21 @@ public class PackageOps {
     }
 
     public static int orderPackagesByUnpacked(PackageType p1, PackageType p2) {
-        return compareDates(p1.getLastUnpacked(), p2.getLastUnpacked());
+        int val = compareDates(p1.getLastUnpacked(), p2.getLastUnpacked());
+        if (val != 0) {
+            return val;
+        } else {
+            val = compareDates(p1.getCreated(), p2.getCreated());
+            if (val != 0) {
+                return val;
+            } else {
+                return getCompareName(p1).compareTo(getCompareName(p2));            
+            }
+        }
+    }
+    
+    public static String getCompareName(PackageType pkg) {
+        return pkg.getGroup() + "~~~" + pkg.getName() + "~~~" + pkg.getVersion();
     }
 
     public static boolean hasPackageContents(PackageType pkg) {
