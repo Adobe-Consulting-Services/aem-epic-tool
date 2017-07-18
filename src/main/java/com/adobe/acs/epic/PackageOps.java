@@ -13,15 +13,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 /**
@@ -78,9 +82,25 @@ public class PackageOps {
 
     public static String getDownloadLink(PackageType pkg) {
         AuthHandler authHandler = ApplicationState.getInstance().getAuthHandler();
-        return authHandler.getUrlBase() + "/etc/packages/" + pkg.getGroup() + "/" + pkg.getDownloadName();
+        return authHandler.getUrlBase() + "/etc/packages/" +
+                urlPathEscape(pkg.getGroup()) + "/" + 
+                urlPathEscape(pkg.getDownloadName());
     }
 
+    private static String urlPathEscape(String str) {
+        try {
+            return URLEncoder.encode(str, "UTF-8")
+                    .replaceAll(Pattern.quote("+"), "%20")
+                    .replaceAll(Pattern.quote("%21"), "!")
+                    .replaceAll(Pattern.quote("%27"), "'")
+                    .replaceAll(Pattern.quote("%28"), "(")
+                    .replaceAll(Pattern.quote("%29"), ")")
+                    .replaceAll(Pattern.quote("%7E"), "~");
+        } catch (UnsupportedEncodingException ex) {
+            return str;
+        }
+    }
+    
     private static File getPackageFile(PackageType pkg, DoubleProperty progress) {
         String filename = pkg.getGroup().replaceAll("[^A-Za-z]", "_") + "-" + pkg.getDownloadName() + "-" + pkg.getVersion() + "-" + pkg.getSize();
         if (!packageFiles.containsKey(filename)) {
