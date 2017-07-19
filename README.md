@@ -6,6 +6,7 @@ This is a stand-alone desktop application that allows you to connect to a remote
 - Download packages for offline use or for further inspection
 - Summarize what is in each package (per base folder or per type)
 - Compare versions of a package to see what has changed
+- Compare several packages against each other to see which packages overlap each other
 - Many table views also support XLSX export for producing documentation
 
 (Note: Java 8 is required to run this tool)
