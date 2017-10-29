@@ -25,7 +25,6 @@ import javafx.beans.property.DoubleProperty;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 /**
@@ -80,8 +79,7 @@ public class PackageOps {
 
     private static final Map<String, File> packageFiles = new HashMap<>();
 
-    public static String getDownloadLink(PackageType pkg) {
-        AuthHandler authHandler = ApplicationState.getInstance().getAuthHandler();
+    public static String getDownloadLink(PackageType pkg, AuthHandler authHandler) {
         return authHandler.getUrlBase() + "/etc/packages/" +
                 urlPathEscape(pkg.getGroup()) + "/" + 
                 urlPathEscape(pkg.getDownloadName());
@@ -101,14 +99,13 @@ public class PackageOps {
         }
     }
     
-    private static File getPackageFile(PackageType pkg, DoubleProperty progress) {
+    private static File getPackageFile(PackageType pkg, AuthHandler authHandler, DoubleProperty progress) {
         String filename = pkg.getGroup().replaceAll("[^A-Za-z]", "_") + "-" + pkg.getDownloadName() + "-" + pkg.getVersion() + "-" + pkg.getSize();
         if (!packageFiles.containsKey(filename)) {
-            AuthHandler authHandler = ApplicationState.getInstance().getAuthHandler();
             try (CloseableHttpClient client = authHandler.getAuthenticatedClient()) {
                 File targetFile = File.createTempFile(filename, ".zip");
                 targetFile.deleteOnExit();
-                String url = getDownloadLink(pkg);
+                String url = getDownloadLink(pkg, authHandler);
                 HttpGet request = new HttpGet(url);
                 try (CloseableHttpResponse response = client.execute(request)) {
                     HttpEntity entity = response.getEntity();
@@ -151,9 +148,9 @@ public class PackageOps {
         return packageFiles.get(filename);
     }
 
-    public static PackageContents getPackageContents(PackageType pkg, DoubleProperty progress) throws IOException {
+    public static PackageContents getPackageContents(PackageType pkg, AuthHandler handler, DoubleProperty progress) throws IOException {
         if (app.getPackageContents(pkg) == null) {
-            File targetFile = getPackageFile(pkg, progress);
+            File targetFile = getPackageFile(pkg, handler, progress);
             Logger.getLogger(AppController.class.getName()).log(Level.INFO, "Package downloaded to {0}", targetFile.getPath());
             app.putPackageContents(pkg, new PackageContents(targetFile, pkg));
         }

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="480.0" stylesheets="@../styles/Styles.css" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.adobe.acs.epic.controller.PackageListController">
+    <children>
+        <ToolBar maxWidth="1.7976931348623157E308">
+            <items>
+                <CheckBox fx:id="showProductPackages" mnemonicParsing="false" selected="true" text="%showProduct" />
+                <CheckBox fx:id="showCustomPackages" mnemonicParsing="false" selected="true" text="%showCustom" />
+                <CheckBox fx:id="showUninstalledPackages" mnemonicParsing="false" selected="true" text="%showUninstalled" />
+                <Separator orientation="VERTICAL" />
+                <Pane HBox.hgrow="ALWAYS" />
+                <MenuButton mnemonicParsing="false" styleClass="hamburger" text="%hamburger" BorderPane.alignment="CENTER">
+                    <items>
+                        <MenuItem mnemonicParsing="false" onAction="#exportPackagesButtonPressed" text="%export" />
+                        <MenuItem mnemonicParsing="false" onAction="#compareAll" text="%compareAll" />
+                        <MenuItem fx:id="compareSelectedMenuItem" disable="true" mnemonicParsing="false" onAction="#compareSelected" text="%compareSelected" />
+                        <MenuItem mnemonicParsing="false" onAction="#readPackages" text="%refresh_packages" />
+                    </items>
+                </MenuButton>
+            </items>
+        </ToolBar>
+        <TableView fx:id="packageTable" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="125.0" prefWidth="-1.0" text="%group" />
+                <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="200.0" prefWidth="-1.0" text="%package" />
+                <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="-1.0" text="%size" />
+                <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="90.0" prefWidth="-1.0" text="%version" />
+                <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="165.0" prefWidth="-1.0" text="%modified" />
+                <TableColumn editable="false" maxWidth="1.7976931348623157E308" minWidth="165.0" prefWidth="-1.0" text="%unpacked" />
+            </columns>
+        </TableView>
+    </children>
+</VBox>

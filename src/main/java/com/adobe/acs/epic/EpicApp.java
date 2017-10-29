@@ -1,6 +1,7 @@
 package com.adobe.acs.epic;
 
 import com.adobe.acs.epic.controller.AppController;
+import com.adobe.acs.epic.controller.AuthHandler;
 import com.adobe.acs.epic.controller.PackageCompareController;
 import com.adobe.acs.epic.controller.PackageInfoController;
 import com.adobe.acs.epic.model.PackageComparison;
@@ -47,7 +48,7 @@ public class EpicApp extends Application {
         }
     }
     
-    public static void showPackageDiff(PackageType left, PackageType right) {
+    public static void showPackageDiff(PackageType left, PackageType right, AuthHandler handler) {
         try {
             FXMLLoader loader = new FXMLLoader(EpicApp.class.getResource("/fxml/PackageCompare.fxml"));
             loader.setResources(ApplicationState.getInstance().getResourceBundle());
@@ -60,7 +61,7 @@ public class EpicApp extends Application {
             popup.initModality(Modality.NONE);
             popup.initOwner(applicationWindow);
 
-            runnerActivityController.initDiffView(left, right);
+            runnerActivityController.initDiffView(left, right, handler);
 
             popup.showAndWait();
         } catch (IOException ex) {
