@@ -38,7 +38,7 @@ public class ApplicationState {
     }
     private final BooleanProperty isRunning = new SimpleBooleanProperty(false);
     private ResourceBundle i18n;
-    private ArrayList<AuthHandler> authHandlers;
+    private final ArrayList<AuthHandler> authHandlers = new ArrayList<>();
 
     public static ApplicationState getInstance() {
         if (singleton == null) {
