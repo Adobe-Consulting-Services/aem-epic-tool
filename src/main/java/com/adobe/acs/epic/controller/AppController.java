@@ -65,19 +65,20 @@ public class AppController {
     public void addNewConnectionTab() {
         int index = connectionCounter.getAndIncrement();
         AuthHandler loginHandler = loginController.generateNewHandler();
-        Tab connectionTab = new Tab();
         FXMLLoader loader = new FXMLLoader(EpicApp.class.getResource("/fxml/PackageList.fxml"));
         loader.setResources(ApplicationState.getInstance().getResourceBundle());
         try {
             loader.load();
-            connectionTab.setContent(loader.getRoot());
+            recentConnectionTab = new Tab();
+            recentConnectionTab.setContent(loader.getRoot());
             PackageListController packageListController = loader.getController();
             packageListController.setIndex(index);
             ApplicationState.getInstance().setAuthHandler(loginHandler, index);
+            recentConnectionTab.textProperty().bind(loginHandler.model.hostProperty());
             loginHandler.model.loginConfirmedProperty().addListener((confirmedValue, oldValue, newValue) -> this.updateConnectionTabStyle(loginHandler));
             packageListController.initAuthHandlerHooks(loginHandler);
             updateConnectionTabStyle(loginHandler);
-            tabs.getTabs().add(tabs.getTabs().size() - 1, connectionTab);
+            tabs.getTabs().add(tabs.getTabs().size() - 1, recentConnectionTab);
         } catch (IOException ex) {
             Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, null, ex);
         }
