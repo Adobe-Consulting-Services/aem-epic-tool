@@ -76,10 +76,10 @@ public class AppController {
             loader.load();
             recentConnectionTab = new Tab();
             recentConnectionTab.setContent(loader.getRoot());
+            recentConnectionTab.textProperty().bind(loginHandler.model.hostProperty());
             PackageListController packageListController = loader.getController();
             packageListController.setIndex(index);
             ApplicationState.getInstance().setAuthHandler(loginHandler, index);
-            recentConnectionTab.textProperty().bind(loginHandler.model.hostProperty());
             loginHandler.model.loginConfirmedProperty().addListener((confirmedValue, oldValue, newValue) -> this.updateConnectionTabStyle(loginHandler));
             packageListController.initAuthHandlerHooks(loginHandler);
             updateConnectionTabStyle(loginHandler);

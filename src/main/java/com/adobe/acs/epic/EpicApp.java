@@ -26,7 +26,7 @@ public class EpicApp extends Application {
 
     private AppController appController;
 
-    public static void openPackageDetails(PackageType pkg) {
+    public static void openPackageDetails(PackageType pkg, AuthHandler handler) {
         try {
             FXMLLoader loader = new FXMLLoader(EpicApp.class.getResource("/fxml/PackageInfo.fxml"));
             loader.setResources(ApplicationState.getInstance().getResourceBundle());
@@ -39,6 +39,7 @@ public class EpicApp extends Application {
             popup.initModality(Modality.NONE);
             popup.initOwner(applicationWindow);
 
+            runnerActivityController.setAuthHandler(handler);
             runnerActivityController.setPackage(pkg);
 
             popup.showAndWait();

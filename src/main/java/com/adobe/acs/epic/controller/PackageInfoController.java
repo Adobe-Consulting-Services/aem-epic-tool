@@ -374,4 +374,8 @@ public class PackageInfoController {
             }
         });
     }
+
+    public void setAuthHandler(AuthHandler handler) {
+        this.authHandler = handler;
+    }
 }

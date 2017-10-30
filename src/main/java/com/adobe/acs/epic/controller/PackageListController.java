@@ -159,7 +159,7 @@ public class PackageListController {
         if (evt.getButton() == MouseButton.PRIMARY && evt.getClickCount() == 2) {
             PackageType pkg = packageTable.getSelectionModel().getSelectedItem();
             if (pkg != null) {
-                EpicApp.openPackageDetails(pkg);
+                EpicApp.openPackageDetails(pkg, loginHandler);
             }
         }
     }
