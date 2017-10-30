@@ -24,6 +24,9 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,6 +36,7 @@ import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
+import javax.net.ssl.SSLContext;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -42,15 +46,26 @@ import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 
 public class AuthHandler {
+
     private static final String TEST_PAGE = "/content.json";
 
+    public boolean allowSelfSigned = true;
+
     public final Login model;
+
+    public Runnable unbindHandler;
 
     public AuthHandler(StringProperty host, BooleanProperty ssl, StringProperty userName, StringProperty password) {
         model = new Login();
@@ -60,6 +75,13 @@ public class AuthHandler {
         model.userNameProperty().bindBidirectional(userName);
         model.passwordProperty().bindBidirectional(password);
 
+        unbindHandler = () -> {
+            model.hostProperty().unbindBidirectional(host);
+            model.sslProperty().unbindBidirectional(ssl);
+            model.userNameProperty().unbindBidirectional(userName);
+            model.passwordProperty().unbindBidirectional(password);
+        };
+
         model.hostProperty().addListener(this::triggerLoginTest);
         model.sslProperty().addListener(this::triggerLoginTest);
         model.userNameProperty().addListener(this::triggerLoginTest);
@@ -68,6 +90,10 @@ public class AuthHandler {
         model.statusMessageProperty().set(ApplicationState.getMessage(INCOMPLETE_FIELDS));
         model.loginConfirmedProperty().set(false);
 
+    }
+
+    public void unbind() {
+        unbindHandler.run();
     }
 
     public String getUrlBase() {
@@ -82,6 +108,7 @@ public class AuthHandler {
     }
 
     public CloseableHttpClient getAuthenticatedClient() {
+        HttpClientContext context = null;
         String[] hostPort = model.hostProperty().get().split(":");
         if (hostPort.length == 2) {
             int port = 4502;
@@ -95,13 +122,33 @@ public class AuthHandler {
             authCache.put(targetHost, new BasicScheme());
 
             // Add AuthCache to the execution context
-            final HttpClientContext context = HttpClientContext.create();
+            context = HttpClientContext.create();
             context.setCredentialsProvider(getCredentialsProvider());
             context.setAuthCache(authCache);
-            return ConnectionManager.getInstance().getAuthenticatedClient(getCredentialsProvider(), context);
-        } else {
-            return ConnectionManager.getInstance().getAuthenticatedClient(getCredentialsProvider(), null);        
-        }         
+        }
+        if (allowSelfSigned) {
+            try {
+                SSLContext sslContext = SSLContext.getDefault();
+                Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                        .register("https", new SSLConnectionSocketFactory(sslContext, (hostname, session) -> true))
+                        .build();
+                SSLContextBuilder builder = new SSLContextBuilder();
+                builder.loadTrustMaterial(null, (chain, authType) -> true);
+                SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build());
+                return HttpClients.custom()
+                        .setSSLSocketFactory(sslsf)
+                        .setSSLHostnameVerifier((hostname, session) -> true)
+                        .setDefaultCredentialsProvider(getCredentialsProvider())
+                        .build();
+            } catch (NoSuchAlgorithmException ex) {
+                Logger.getLogger(AuthHandler.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (KeyStoreException ex) {
+                Logger.getLogger(AuthHandler.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (KeyManagementException ex) {
+                Logger.getLogger(AuthHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return ConnectionManager.getInstance().getAuthenticatedClient(getCredentialsProvider(), context);
     }
 
     private CredentialsProvider getCredentialsProvider() {
@@ -111,43 +158,45 @@ public class AuthHandler {
                 model.passwordProperty().get()
         ));
         return creds;
-    }    
+    }
 
     /**
-     * This allows connection testing to occur atomically without gumming-up the user experience
+     * This allows connection testing to occur atomically without gumming-up the
+     * user experience
      */
     AtomicInteger activityCounter = new AtomicInteger();
     ScheduledThreadPoolExecutor testExecutor = new ScheduledThreadPoolExecutor(10);
+
     private void triggerLoginTest(ObservableValue v, Object oldVal, Object newVal) {
         final int testValue = activityCounter.incrementAndGet();
-        testExecutor.schedule(()->{
+        testExecutor.schedule(() -> {
             if (activityCounter.get() == testValue) {
                 loginTest();
             }
         }, 500, TimeUnit.MILLISECONDS);
     }
-    
+
     private void loginTest() {
         CloseableHttpClient client = null;
         try {
             if (!model.requiredFieldsPresentProperty().get()) {
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     model.loginConfirmedProperty().set(false);
                     model.statusMessageProperty().set(ApplicationState.getMessage(INCOMPLETE_FIELDS));
                 });
                 return;
             }
-                                
+
             String url = getUrlBase() + TEST_PAGE;
             URL testUrl = new URL(url);
             InetAddress address = InetAddress.getByName(testUrl.getHost());
             if (address == null || isDnsRedirect(address)) {
-                throw new UnknownHostException("Unknown host "+testUrl.getHost());
+                throw new UnknownHostException("Unknown host " + testUrl.getHost());
             }
-            
-            Platform.runLater(()->{
+
+            Platform.runLater(() -> {
                 model.loginConfirmedProperty().set(false);
-                model.statusMessageProperty().set(ApplicationState.getMessage(ATTEMPTING_CONNECTION));            
+                model.statusMessageProperty().set(ApplicationState.getMessage(ATTEMPTING_CONNECTION));
             });
             client = getAuthenticatedClient();
             HttpGet loginTest = new HttpGet(url);
@@ -155,25 +204,25 @@ public class AuthHandler {
             StatusLine responseStatus = response.getStatusLine();
 
             if (responseStatus.getStatusCode() >= 200 && responseStatus.getStatusCode() < 300) {
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     model.loginConfirmedProperty().set(true);
                     model.statusMessageProperty().set(ApplicationState.getMessage(CONNECTION_SUCCESSFUL));
                 });
             } else {
-                Platform.runLater(()->{
+                Platform.runLater(() -> {
                     model.loginConfirmedProperty().set(false);
                     model.statusMessageProperty().set(ApplicationState.getMessage(CONNECTION_ERROR) + responseStatus.getReasonPhrase() + " (" + responseStatus.getStatusCode() + ")");
                 });
             }
         } catch (MalformedURLException | IllegalArgumentException | UnknownHostException ex) {
             Logger.getLogger(AuthHandler.class.getName()).log(Level.SEVERE, null, ex);
-            Platform.runLater(()->{
+            Platform.runLater(() -> {
                 model.statusMessageProperty().set(ApplicationState.getMessage(CONNECTION_ERROR) + ex.getMessage());
                 model.loginConfirmedProperty().set(false);
             });
         } catch (Throwable ex) {
             Logger.getLogger(AuthHandler.class.getName()).log(Level.SEVERE, null, ex);
-            Platform.runLater(()->{
+            Platform.runLater(() -> {
                 model.statusMessageProperty().set(ApplicationState.getMessage(CONNECTION_ERROR) + ex.getMessage());
                 model.loginConfirmedProperty().set(false);
             });
@@ -189,17 +238,19 @@ public class AuthHandler {
     }
 
     /**
-     * ISP DNS providers commonly redirect to their own branded search pages in order to drive revenue
-     * This greedy business practice can result in a hung connection so we have to detect it
-     * and avoid those redirects at all costs.
+     * ISP DNS providers commonly redirect to their own branded search pages in
+     * order to drive revenue This greedy business practice can result in a hung
+     * connection so we have to detect it and avoid those redirects at all
+     * costs.
+     *
      * @param address
-     * @return 
+     * @return
      */
     private boolean isDnsRedirect(InetAddress address) {
         byte[] ip = address.getAddress();
         // Detect TWC rr.com redirects -- note that bytes are signed values 
         // so we have alias them back to positive integers first
-        if ((ip[0]&0x0ff) == 198 && (ip[1]&0x0ff) == 105) {
+        if ((ip[0] & 0x0ff) == 198 && (ip[1] & 0x0ff) == 105) {
             return true;
         }
         return false;
