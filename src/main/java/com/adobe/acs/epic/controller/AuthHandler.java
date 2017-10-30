@@ -67,8 +67,6 @@ public class AuthHandler {
     
     public Runnable unbindHandler;
 
-    public Runnable unbindHandler;
-
     public AuthHandler(StringProperty host, BooleanProperty ssl, StringProperty userName, StringProperty password) {
         model = new Login();
 
@@ -101,10 +99,6 @@ public class AuthHandler {
 
     }
     
-    public void unbind() {
-        unbindHandler.run();
-    }
-
     public void unbind() {
         unbindHandler.run();
     }
