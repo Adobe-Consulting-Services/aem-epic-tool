@@ -64,11 +64,11 @@ public class PackageOps {
             if (val != 0) {
                 return val;
             } else {
-                return getCompareName(p1).compareTo(getCompareName(p2));            
+                return getCompareName(p1).compareTo(getCompareName(p2));
             }
         }
     }
-    
+
     public static String getCompareName(PackageType pkg) {
         return pkg.getGroup() + "~~~" + pkg.getName() + "~~~" + pkg.getVersion();
     }
@@ -80,9 +80,9 @@ public class PackageOps {
     private static final Map<String, File> packageFiles = new HashMap<>();
 
     public static String getDownloadLink(PackageType pkg, AuthHandler authHandler) {
-        return authHandler.getUrlBase() + "/etc/packages/" +
-                urlPathEscape(pkg.getGroup()) + "/" + 
-                urlPathEscape(pkg.getDownloadName());
+        return authHandler.getUrlBase() + "/etc/packages/"
+                + urlPathEscape(pkg.getGroup()) + "/"
+                + urlPathEscape(pkg.getDownloadName());
     }
 
     private static String urlPathEscape(String str) {
@@ -98,7 +98,7 @@ public class PackageOps {
             return str;
         }
     }
-    
+
     private static File getPackageFile(PackageType pkg, AuthHandler authHandler, DoubleProperty progress) {
         String filename = pkg.getGroup().replaceAll("[^A-Za-z]", "_") + "-" + pkg.getDownloadName() + "-" + pkg.getVersion() + "-" + pkg.getSize();
         if (!packageFiles.containsKey(filename)) {
@@ -124,8 +124,8 @@ public class PackageOps {
                                 out.write(buffer, 0, size);
                                 if (progress != null && (++updateCounter % 16) == 0) {
                                     final double newProgress = (double) downloaded / (double) fileSize;
-                                    Platform.runLater(()->
-                                            progress.set(newProgress)
+                                    Platform.runLater(()
+                                            -> progress.set(newProgress)
                                     );
                                 }
                             }
@@ -143,7 +143,7 @@ public class PackageOps {
             }
         }
         if (progress != null) {
-            progress.set(1.0);
+            Platform.runLater(() -> progress.set(1.0));
         }
         return packageFiles.get(filename);
     }
@@ -156,7 +156,7 @@ public class PackageOps {
         }
         return app.getPackageContents(pkg);
     }
-    
+
     public static String getInformativeVersion(PackageType pkg) {
         String ver = pkg.getVersion();
         if (pkg instanceof CrxPackage) {
@@ -168,5 +168,5 @@ public class PackageOps {
             }
         }
         return ver;
-    }    
+    }
 }

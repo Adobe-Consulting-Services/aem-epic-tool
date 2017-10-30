@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Tab;
@@ -76,7 +77,11 @@ public class AppController {
             loader.load();
             recentConnectionTab = new Tab();
             recentConnectionTab.setContent(loader.getRoot());
-            recentConnectionTab.textProperty().bind(loginHandler.model.hostProperty());
+            recentConnectionTab.textProperty().bind(
+                    Bindings.when(loginHandler.model.hostProperty().isEmpty())
+                    .then("New connection")
+                    .otherwise(loginHandler.model.hostProperty())
+            );
             PackageListController packageListController = loader.getController();
             packageListController.setIndex(index);
             ApplicationState.getInstance().setAuthHandler(loginHandler, index);
