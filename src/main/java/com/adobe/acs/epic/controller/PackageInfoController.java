@@ -289,7 +289,7 @@ public class PackageInfoController {
         otherVersionsList.setOnMouseClicked(evt -> {
             if (evt.getButton() == MouseButton.PRIMARY && evt.getClickCount() == 2) {
                 String version = otherVersionsList.getSelectionModel().getSelectedItem();
-                EpicApp.openPackageDetails(currentPackage.getAllVersions().get(version));
+                EpicApp.openPackageDetails(currentPackage.getAllVersions().get(version), authHandler);
             }
         });
         otherVersionsList.setOnContextMenuRequested(evt -> {
