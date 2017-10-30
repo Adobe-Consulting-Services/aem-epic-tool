@@ -38,7 +38,7 @@ public class ApplicationState {
     }
     private final BooleanProperty isRunning = new SimpleBooleanProperty(false);
     private ResourceBundle i18n;
-    private AuthHandler authHandler;
+    private final ArrayList<AuthHandler> authHandlers = new ArrayList<>();
 
     public static ApplicationState getInstance() {
         if (singleton == null) {
@@ -90,12 +90,24 @@ public class ApplicationState {
         return masterList;
     }    
 
-    public void setAuthHandler(AuthHandler auth) {
-        authHandler = auth;
+    public void setAuthHandler(AuthHandler auth, int i) {
+        synchronized (authHandlers) {
+            if (i >= authHandlers.size()) {
+                authHandlers.add(auth);
+            } else {
+                authHandlers.set(i, auth);
+            }
+        }
     }
     
-    public AuthHandler getAuthHandler() {
-        return authHandler;
+    public AuthHandler getAuthHandler(int i) {
+        synchronized (authHandlers) {
+            if (authHandlers.size() > i) {
+                return authHandlers.get(i);
+            } else {
+                return null;
+            }
+        }
     }
 
     private final Map<String, PackageContents> cachedContents = new HashMap<>();

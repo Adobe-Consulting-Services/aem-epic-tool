@@ -2,6 +2,7 @@ package com.adobe.acs.epic.model;
 
 import com.adobe.acs.epic.DataUtils;
 import com.adobe.acs.epic.PackageOps;
+import com.adobe.acs.epic.controller.AuthHandler;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.IOException;
 import java.util.Iterator;
@@ -18,16 +19,16 @@ public class CrxPackage extends PackageType {
     Map<String, PackageType> allVersions = new TreeMap<>(this::compareVersions);
     PackageContents contents;
     
-    public PackageContents getContents() throws IOException {
+    public PackageContents getContents(AuthHandler authHandler) throws IOException {
         if (contents == null) {
-            contents = PackageOps.getPackageContents(getMostRecent(), null);
+            contents = PackageOps.getPackageContents(getMostRecent(), authHandler, null);
         }
         return contents;
     }
 
-    public PackageContents getContentsWithProgress(DoubleProperty progress) throws IOException {
+    public PackageContents getContentsWithProgress(AuthHandler authHandler, DoubleProperty progress) throws IOException {
         if (contents == null) {
-            contents = PackageOps.getPackageContents(getMostRecent(), progress);
+            contents = PackageOps.getPackageContents(getMostRecent(), authHandler, progress);
         }
         return contents;
     }

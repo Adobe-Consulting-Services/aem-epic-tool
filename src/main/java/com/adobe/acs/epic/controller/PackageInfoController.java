@@ -47,6 +47,8 @@ import javafx.stage.FileChooser;
 
 public class PackageInfoController {
 
+    AuthHandler authHandler = null;
+    
     @FXML // ResourceBundle that was given to the FXMLLoader
     private ResourceBundle resources;
 
@@ -237,7 +239,7 @@ public class PackageInfoController {
 
         groupLabel.setText(pkg.getGroup());
         packageLabel.setText(pkg.getName());
-        downloadLinkLabel.setText(PackageOps.getDownloadLink(pkg));
+        downloadLinkLabel.setText(PackageOps.getDownloadLink(pkg, authHandler));
         versionLabel.setText(pkg.getVersion());
         sizeLabel.setText(DataUtils.getHumanSize(pkg.getSize()) + " (" + pkg.getSize() + " bytes)");
         createdLabel.setText(summarizeUserDateCombo(pkg.getCreated(), pkg.getCreatedBy()));
@@ -249,7 +251,7 @@ public class PackageInfoController {
                 return;
             }
             Map<DataFormat, Object> content = new HashMap<>();
-            String url = PackageOps.getDownloadLink(pkg);
+            String url = PackageOps.getDownloadLink(pkg, authHandler);
             content.put(DataFormat.URL, url);
             content.put(DataFormat.PLAIN_TEXT, url);
             Clipboard.getSystemClipboard().setContent(content);
@@ -287,14 +289,14 @@ public class PackageInfoController {
         otherVersionsList.setOnMouseClicked(evt -> {
             if (evt.getButton() == MouseButton.PRIMARY && evt.getClickCount() == 2) {
                 String version = otherVersionsList.getSelectionModel().getSelectedItem();
-                EpicApp.openPackageDetails(currentPackage.getAllVersions().get(version));
+                EpicApp.openPackageDetails(currentPackage.getAllVersions().get(version), authHandler);
             }
         });
         otherVersionsList.setOnContextMenuRequested(evt -> {
             MenuItem diffMenuItem = new MenuItem("Diff to this version (" + pkg.getVersion() + ")");
             diffMenuItem.setOnAction(evt2 -> {
                 String version = otherVersionsList.getSelectionModel().getSelectedItem();
-                EpicApp.showPackageDiff(pkg, currentPackage.getAllVersions().get(version));
+                EpicApp.showPackageDiff(pkg, currentPackage.getAllVersions().get(version), authHandler);
             });
             ContextMenu cm = new ContextMenu(
                     diffMenuItem
@@ -325,7 +327,7 @@ public class PackageInfoController {
         if (PackageOps.hasPackageContents(pkg)) {
             downloadingPane.setVisible(false);
             try {
-                showPackageContents(PackageOps.getPackageContents(pkg, null));
+                showPackageContents(PackageOps.getPackageContents(pkg, authHandler, null));
             } catch (IOException ex) {
                 downloadingPane.setVisible(true);
                 downloadingPane.setCenter(new TextArea("Error downloading package: " + ex.getMessage()));
@@ -335,7 +337,7 @@ public class PackageInfoController {
             downloadingPane.setVisible(true);
             new Thread(() -> {
                 try {
-                    PackageContents contents = PackageOps.getPackageContents(pkg, downloadProgressIndicator.progressProperty());
+                    PackageContents contents = PackageOps.getPackageContents(pkg, authHandler, downloadProgressIndicator.progressProperty());
                     Platform.runLater(() -> showPackageContents(contents));
                 } catch (IOException ex) {
                     Logger.getLogger(PackageInfoController.class.getName()).log(Level.SEVERE, null, ex);
@@ -371,5 +373,9 @@ public class PackageInfoController {
                 services.showDocument(path);
             }
         });
+    }
+
+    public void setAuthHandler(AuthHandler handler) {
+        this.authHandler = handler;
     }
 }

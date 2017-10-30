@@ -15,7 +15,6 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -104,7 +103,7 @@ public class PackageCompareController {
     PackageComparison diff;
     PackageType left, right;
 
-    public void initDiffView(PackageType left, PackageType right) {
+    public void initDiffView(PackageType left, PackageType right, AuthHandler handler) {
         this.left = left;
         this.right = right;
         diff = new PackageComparison();
@@ -114,8 +113,8 @@ public class PackageCompareController {
 
         new Thread(() -> {
             try {
-                diff.observe(PackageOps.getPackageContents(left, leftDownload));
-                diff.observe(PackageOps.getPackageContents(right, rightDownload));
+                diff.observe(PackageOps.getPackageContents(left, handler, leftDownload));
+                diff.observe(PackageOps.getPackageContents(right, handler, rightDownload));
                 downloadPane.setVisible(false);
                 diffViewPane.setVisible(true);
                 Platform.runLater(this::initListViews);

@@ -40,6 +40,34 @@
                 </executions>
             </plugin>
             <plugin>
+            <groupId>com.zenjava</groupId>
+            <artifactId>javafx-maven-plugin</artifactId>
+            <version>8.1.3</version>
+            <configuration>
+                <mainClass>org.mycompany.myapp</mainClass>
+                <verbose>true</verbose>
+                <bundler>EXE</bundler>
+                <additionalAppResources>${project.build.directory}/additionalResources</additionalAppResources>
+            </configuration>
+            <executions>
+                <!-- required before build-native -->
+                <execution>
+                    <id>create-jfxjar</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>build-jar</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>create-native</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>build-native</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>            
+<!--            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
@@ -52,7 +80,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${java.home}/../bin/javapackager</executable>
+                            <executable>${java.home}/bin/javapackager</executable>
                             <arguments>
                                 <argument>-createjar</argument>
                                 <argument>-nocss2bin</argument>
@@ -78,7 +106,7 @@
                         </configuration>
                     </execution>
                 </executions>  
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

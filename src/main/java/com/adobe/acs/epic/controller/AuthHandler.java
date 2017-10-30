@@ -64,6 +64,8 @@ public class AuthHandler {
     public boolean allowSelfSigned = true;
 
     public final Login model;
+    
+    public Runnable unbindHandler;
 
     public Runnable unbindHandler;
 
@@ -74,6 +76,13 @@ public class AuthHandler {
         model.sslProperty().bindBidirectional(ssl);
         model.userNameProperty().bindBidirectional(userName);
         model.passwordProperty().bindBidirectional(password);
+        
+        unbindHandler = () -> {
+            model.hostProperty().unbindBidirectional(host);
+            model.sslProperty().unbindBidirectional(ssl);
+            model.userNameProperty().unbindBidirectional(userName);
+            model.passwordProperty().unbindBidirectional(password);
+        };
 
         unbindHandler = () -> {
             model.hostProperty().unbindBidirectional(host);
@@ -90,6 +99,10 @@ public class AuthHandler {
         model.statusMessageProperty().set(ApplicationState.getMessage(INCOMPLETE_FIELDS));
         model.loginConfirmedProperty().set(false);
 
+    }
+    
+    public void unbind() {
+        unbindHandler.run();
     }
 
     public void unbind() {
