@@ -58,6 +58,11 @@ public class AppController {
         assert tabs != null : "fx:id=\"tabs\" was not injected: check your FXML file 'App.fxml'.";
         assert addConnectionTab != null : "fx:id=\"addConnectionTab\" was not injected: check your FXML file 'App.fxml'.";
         
+        addConnectionTab.setOnSelectionChanged(value -> {
+            if (addConnectionTab.isSelected()) {
+                addNewConnectionTab();                
+            }
+        });
         Platform.runLater(this::addNewConnectionTab);
 
     }
@@ -82,6 +87,7 @@ public class AppController {
         } catch (IOException ex) {
             Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, null, ex);
         }
+        tabs.getSelectionModel().select(0);
     }
 
     private void updateConnectionTabStyle(AuthHandler loginHandler) {

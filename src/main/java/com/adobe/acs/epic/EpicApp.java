@@ -4,7 +4,6 @@ import com.adobe.acs.epic.controller.AppController;
 import com.adobe.acs.epic.controller.AuthHandler;
 import com.adobe.acs.epic.controller.PackageCompareController;
 import com.adobe.acs.epic.controller.PackageInfoController;
-import com.adobe.acs.epic.model.PackageComparison;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.IOException;
 import java.util.Locale;

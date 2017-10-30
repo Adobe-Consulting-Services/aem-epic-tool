@@ -59,10 +59,15 @@ public class LoginController {
         assert connectionVerificationLabel != null : "fx:id=\"connectionVerificationLabel\" was not injected: check your FXML file 'App.fxml'.";
     }
 
+    AuthHandler lastLoginHandler = null;
     AuthHandler generateNewHandler() {
+        if (lastLoginHandler != null) {
+            lastLoginHandler.unbind();
+        }
         AuthHandler loginHandler = new AuthHandler(
                 hostField.textProperty(), sslCheckbox.selectedProperty(),
                 usernameField.textProperty(), passwordField.textProperty());
+        lastLoginHandler = loginHandler;
         connectionVerificationLabel.textProperty().bind(loginHandler.model.statusMessageProperty());
         return loginHandler;
     }

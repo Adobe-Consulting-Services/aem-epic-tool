@@ -51,6 +51,8 @@ public class AuthHandler {
     private static final String TEST_PAGE = "/content.json";
 
     public final Login model;
+    
+    public Runnable unbindHandler;
 
     public AuthHandler(StringProperty host, BooleanProperty ssl, StringProperty userName, StringProperty password) {
         model = new Login();
@@ -59,6 +61,13 @@ public class AuthHandler {
         model.sslProperty().bindBidirectional(ssl);
         model.userNameProperty().bindBidirectional(userName);
         model.passwordProperty().bindBidirectional(password);
+        
+        unbindHandler = () -> {
+            model.hostProperty().unbindBidirectional(host);
+            model.sslProperty().unbindBidirectional(ssl);
+            model.userNameProperty().unbindBidirectional(userName);
+            model.passwordProperty().unbindBidirectional(password);
+        };
 
         model.hostProperty().addListener(this::triggerLoginTest);
         model.sslProperty().addListener(this::triggerLoginTest);
@@ -68,6 +77,10 @@ public class AuthHandler {
         model.statusMessageProperty().set(ApplicationState.getMessage(INCOMPLETE_FIELDS));
         model.loginConfirmedProperty().set(false);
 
+    }
+    
+    public void unbind() {
+        unbindHandler.run();
     }
 
     public String getUrlBase() {
