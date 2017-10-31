@@ -36,6 +36,8 @@
                         <MenuItem mnemonicParsing="false" onAction="#compareAll" text="%compareAll" />
                         <MenuItem fx:id="compareSelectedMenuItem" disable="true" mnemonicParsing="false" onAction="#compareSelected" text="%compareSelected" />
                         <MenuItem mnemonicParsing="false" onAction="#readPackages" text="%refresh_packages" />
+                        <MenuItem onAction="#saveOfflineData" text="%saveOffline" />
+                        <MenuItem onAction="#loadOfflineData" text="%loadOffline" />
                     </items>
                 </MenuButton>
             </items>

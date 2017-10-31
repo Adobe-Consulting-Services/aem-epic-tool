@@ -59,6 +59,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javax.xml.bind.JAXB;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -88,7 +89,7 @@ public class PackageListController {
     @FXML
     private MenuItem compareSelectedMenuItem;
 
-    ObservableList packageList = FXCollections.observableArrayList();
+    ObservableList<PackageType> packageList = FXCollections.observableArrayList();
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     void initialize() {
@@ -121,6 +122,7 @@ public class PackageListController {
     }
 
     int connectionIndex = -1;
+
     void setIndex(int idx) {
         connectionIndex = idx;
     }
@@ -170,6 +172,8 @@ public class PackageListController {
         }
     }
 
+    CrxType packageListingResult;
+
     @FXML
     private void readPackages(ActionEvent evt) {
         Platform.runLater(packageList::clear);
@@ -178,15 +182,83 @@ public class PackageListController {
                 String url = loginHandler.getUrlBase() + "/crx/packmgr/service.jsp?cmd=ls";
                 HttpGet request = new HttpGet(url);
                 try (CloseableHttpResponse response = client.execute(request)) {
-                    CrxType result = JAXB.unmarshal(response.getEntity().getContent(), CrxType.class);
-                    List<PackageType> rawList = result.getResponse().getData().getPackages().getPackage();
-                    ApplicationState.getInstance().prepareMasterList(rawList);
-                    Platform.runLater(this::applyFilters);
+                    packageListingResult = JAXB.unmarshal(response.getEntity().getContent(), CrxType.class);
+                    loadPackagesFromListing(packageListingResult);
                 }
             } catch (IOException ex) {
                 Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, null, ex);
             }
         }).start();
+    }
+
+    private void loadPackagesFromListing(CrxType packageListingResult) {
+        List<PackageType> rawList = packageListingResult.getResponse().getData().getPackages().getPackage();
+        ApplicationState.getInstance().prepareMasterList(rawList);
+        Platform.runLater(this::applyFilters);
+    }
+
+    public void saveOfflineData(ActionEvent evt) throws IOException {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Select where to save the offline package data");
+        File parentFolder = chooser.showDialog(null);
+        if (parentFolder != null) {
+            File exportFolder = new File(parentFolder, "offline_packages");
+            exportFolder.mkdirs();
+            File packageListFile = new File(exportFolder, "package_list.xml");
+            JAXB.marshal(packageListingResult, packageListFile);
+            DoubleProperty[] downloadProgress = new DoubleProperty[packageList.size()];
+            DoubleBinding overallProgress = null;
+            for (int i = 0; i < packageList.size(); i++) {
+                downloadProgress[i] = new SimpleDoubleProperty(PackageOps.hasPackageContents(packageList.get(i)) ? 1.0 : 0.0);
+                if (i == 1) {
+                    overallProgress = downloadProgress[0].add(downloadProgress[1]);
+                } else if (i > 1) {
+                    overallProgress = overallProgress.add(downloadProgress[i]);
+                }
+            }
+            overallProgress = overallProgress.multiply(1.0 / packageList.size());
+
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Exporting packages");
+            alert.setHeaderText("Downloads in progress");
+            ProgressIndicator progressIndicator = new ProgressIndicator();
+            progressIndicator.setPrefSize(200, 200);
+            progressIndicator.progressProperty().bind(overallProgress);
+            alert.getDialogPane().setContent(progressIndicator);
+            alert.show();
+
+            new Thread(() -> {
+                for (int i = 0; i < packageList.size(); i++) {
+                    try {
+                        PackageOps.getPackageContents(packageList.get(i), loginHandler, downloadProgress[i]);
+                    } catch (IOException ex) {
+                        final PackageType pkg = packageList.get(i);
+                        Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, "Error downloading package " + pkg.getName(), ex);
+                        Platform.runLater(() -> {
+                            Alert error = new Alert(AlertType.ERROR);
+                            error.setTitle("Download error");
+                            error.setHeaderText("Download error");
+                            error.setContentText("Error downloading " + pkg.getName() + " : " + ex.getMessage());
+                            error.show();
+                        });
+                    }
+                }
+                Platform.runLater(() -> {
+                    alert.close();
+                    for (PackageType pkg : packageList) {
+                        try {
+                            PackageOps.relocatePackageFile(pkg, exportFolder);
+                        } catch (IOException ex) {
+                            Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+                });
+            }).start();
+        }
+    }
+
+    public void loadOfflineData(ActionEvent evt) {
+
     }
 
     Set<Function<CrxPackage, Boolean>> filters = new HashSet<>();
@@ -257,7 +329,7 @@ public class PackageListController {
                     compare.observe(PackageOps.getPackageContents(pkgs.get(i), loginHandler, downloadProgress[i]));
                 } catch (IOException ex) {
                     final PackageType pkg = pkgs.get(i);
-                    Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, "Error downloading package "+pkg.getName(), ex);
+                    Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, "Error downloading package " + pkg.getName(), ex);
                     Platform.runLater(() -> {
                         Alert error = new Alert(AlertType.ERROR);
                         error.setTitle("Download error");
