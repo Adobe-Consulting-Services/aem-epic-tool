@@ -52,7 +52,7 @@ public class AppController {
 
     @FXML // fx:id="addConnectionTab"
     private Tab addConnectionTab;
-
+    
     @FXML // This method is called by the FXMLLoader when initialization is complete
     void initialize() throws IOException {
         assert loginController != null : "fx:id=\"login\" was not injected: check your FXML file 'App.fxml'.";
@@ -82,8 +82,10 @@ public class AppController {
                     .then("New connection")
                     .otherwise(loginHandler.model.hostProperty())
             );
+            recentConnectionTab.setClosable(true);
             PackageListController packageListController = loader.getController();
             packageListController.setIndex(index);
+            packageListController.setTab(recentConnectionTab);
             ApplicationState.getInstance().setAuthHandler(loginHandler, index);
             loginHandler.model.loginConfirmedProperty().addListener((confirmedValue, oldValue, newValue) -> this.updateConnectionTabStyle(loginHandler));
             packageListController.initAuthHandlerHooks(loginHandler);

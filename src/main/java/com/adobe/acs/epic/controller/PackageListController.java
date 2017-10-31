@@ -55,6 +55,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
@@ -275,6 +276,11 @@ public class PackageListController {
                         Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
+                
+                loginHandler.unbind();
+                connectionTab.setStyle("-fx-background-color:#f8f");
+                connectionTab.textProperty().unbind();
+                connectionTab.setText(importFile.getParentFile().getName()+ " (offline)");
             });
         }
     }
@@ -379,5 +385,10 @@ public class PackageListController {
                 }
             });
         }).start();
+    }
+
+    Tab connectionTab;
+    public void setTab(Tab tab) {
+        connectionTab = tab;
     }
 }
