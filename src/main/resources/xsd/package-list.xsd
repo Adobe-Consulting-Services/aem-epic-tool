@@ -20,7 +20,7 @@
             <xs:element type="xs:string" name="name"/>
             <xs:element type="xs:string" name="version"/>
             <xs:element type="xs:string" name="downloadName"/>
-            <xs:element type="xs:int" name="size"/>
+            <xs:element type="xs:long" name="size"/>
             <xs:element type="xs:string" name="created"/>
             <xs:element type="xs:string" name="createdBy"/>
             <xs:element type="xs:string" name="lastModified"/>
@@ -42,7 +42,7 @@
     <xs:complexType name="statusType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
-                <xs:attribute type="xs:short" name="code"/>
+                <xs:attribute type="xs:int" name="code"/>
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
