@@ -15,6 +15,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -80,8 +83,9 @@ public class PackageOps {
     private static final Map<String, File> packageFiles = new HashMap<>();
 
     public static String getDownloadLink(PackageType pkg, AuthHandler authHandler) {
+        boolean hasGroup = pkg.getGroup() != null && !pkg.getGroup().isEmpty();
         return authHandler.getUrlBase() + "/etc/packages/"
-                + urlPathEscape(pkg.getGroup()).replaceAll("%2F", "/") + "/"
+                + ( hasGroup ? urlPathEscape(pkg.getGroup()) + "/" : "")
                 + urlPathEscape(pkg.getDownloadName());
     }
 
@@ -93,6 +97,7 @@ public class PackageOps {
                     .replaceAll(Pattern.quote("%27"), "'")
                     .replaceAll(Pattern.quote("%28"), "(")
                     .replaceAll(Pattern.quote("%29"), ")")
+                    .replaceAll(Pattern.quote("%2F"), "/")
                     .replaceAll(Pattern.quote("%7E"), "~");
         } catch (UnsupportedEncodingException ex) {
             return str;
@@ -161,6 +166,21 @@ public class PackageOps {
         return packageFiles.get(filename);
     }
 
+    public static void relocatePackageFile(PackageType pkg, File destination) throws IOException {
+        String filename = pkg.getGroup().replaceAll("[^A-Za-z]", "_") + "-" + pkg.getDownloadName() + "-" + pkg.getVersion() + "-" + pkg.getSize();        
+        File packageFile = packageFiles.get(filename);
+        File target = new File(destination, filename);
+        if (packageFile != null) {
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            if (packageFile.getAbsolutePath().contains(tmpDir)) {
+                Files.move(packageFile.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE);
+                packageFiles.put(filename, target);
+            } else {
+                Files.copy(packageFile.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE);                
+            }
+        }
+    }
+    
     public static PackageContents getPackageContents(PackageType pkg, AuthHandler handler, DoubleProperty progress) throws IOException {
         int retries = 3;
         if (app.getPackageContents(pkg) == null && retries > 0) {
