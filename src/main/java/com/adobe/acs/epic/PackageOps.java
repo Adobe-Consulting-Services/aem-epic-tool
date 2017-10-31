@@ -81,7 +81,7 @@ public class PackageOps {
 
     public static String getDownloadLink(PackageType pkg, AuthHandler authHandler) {
         return authHandler.getUrlBase() + "/etc/packages/"
-                + urlPathEscape(pkg.getGroup()) + "/"
+                + urlPathEscape(pkg.getGroup()).replaceAll("%2F", "/") + "/"
                 + urlPathEscape(pkg.getDownloadName());
     }
 
@@ -108,7 +108,20 @@ public class PackageOps {
                 String url = getDownloadLink(pkg, authHandler);
                 HttpGet request = new HttpGet(url);
                 try (CloseableHttpResponse response = client.execute(request)) {
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if (statusCode < 200 || statusCode > 299) {
+                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, 
+                                "Error retrieving {0}; Status code: {1}; Reason: {2}", 
+                                new Object[]{url, statusCode, response.getStatusLine().getReasonPhrase()});
+                        return null;
+                    }
                     HttpEntity entity = response.getEntity();
+                    if (Math.abs(pkg.getSize() - entity.getContentLength()) > 1024) {
+                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, 
+                                "Error retrieving {0}; Expected size is not the same as download size", 
+                                new Object[]{url});
+                        return null;
+                    }
                     if (entity != null) {
                         InputStream inputStream = entity.getContent();
                         try (OutputStream outputStream = new FileOutputStream(targetFile)) {
@@ -149,12 +162,24 @@ public class PackageOps {
     }
 
     public static PackageContents getPackageContents(PackageType pkg, AuthHandler handler, DoubleProperty progress) throws IOException {
-        if (app.getPackageContents(pkg) == null) {
+        int retries = 3;
+        if (app.getPackageContents(pkg) == null && retries > 0) {
             File targetFile = getPackageFile(pkg, handler, progress);
             Logger.getLogger(AppController.class.getName()).log(Level.INFO, "Package downloaded to {0}", targetFile.getPath());
-            app.putPackageContents(pkg, new PackageContents(targetFile, pkg));
+            try {
+                PackageContents contents = new PackageContents(targetFile, pkg);
+                app.putPackageContents(pkg, contents);
+                return contents;
+            } catch (IOException ex) {
+                Logger.getLogger(PackageOps.class.getName()).log(Level.SEVERE, null, ex);
+                if (retries-- <= 0) {
+                    throw ex;
+                } else {
+                    app.clearPackageContents(pkg);
+                }
+            }
         }
-        return app.getPackageContents(pkg);
+        return null;
     }
 
     public static String getInformativeVersion(PackageType pkg) {

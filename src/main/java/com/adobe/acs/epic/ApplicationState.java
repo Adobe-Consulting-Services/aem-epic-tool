@@ -122,4 +122,8 @@ public class ApplicationState {
     void putPackageContents(PackageType pkg, PackageContents packageContents) {
         cachedContents.put(getPackageContentsKey(pkg), packageContents);
     }
+
+    void clearPackageContents(PackageType pkg) {
+        cachedContents.remove(getPackageContentsKey(pkg));
+    }
 }
