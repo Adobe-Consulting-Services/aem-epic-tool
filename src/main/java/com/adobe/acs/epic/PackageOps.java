@@ -85,7 +85,7 @@ public class PackageOps {
     public static String getDownloadLink(PackageType pkg, AuthHandler authHandler) {
         boolean hasGroup = pkg.getGroup() != null && !pkg.getGroup().isEmpty();
         return authHandler.getUrlBase() + "/etc/packages/"
-                + ( hasGroup ? urlPathEscape(pkg.getGroup()) + "/" : "")
+                + (hasGroup ? urlPathEscape(pkg.getGroup()) + "/" : "")
                 + urlPathEscape(pkg.getDownloadName());
     }
 
@@ -105,7 +105,7 @@ public class PackageOps {
     }
 
     private static File getPackageFile(PackageType pkg, AuthHandler authHandler, DoubleProperty progress) {
-        String filename = pkg.getGroup().replaceAll("[^A-Za-z]", "_") + "-" + pkg.getDownloadName() + "-" + pkg.getVersion() + "-" + pkg.getSize();
+        String filename = getPackageFileName(pkg);
         if (!packageFiles.containsKey(filename)) {
             try (CloseableHttpClient client = authHandler.getAuthenticatedClient()) {
                 File targetFile = File.createTempFile(filename, ".zip");
@@ -115,15 +115,15 @@ public class PackageOps {
                 try (CloseableHttpResponse response = client.execute(request)) {
                     int statusCode = response.getStatusLine().getStatusCode();
                     if (statusCode < 200 || statusCode > 299) {
-                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, 
-                                "Error retrieving {0}; Status code: {1}; Reason: {2}", 
+                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE,
+                                "Error retrieving {0}; Status code: {1}; Reason: {2}",
                                 new Object[]{url, statusCode, response.getStatusLine().getReasonPhrase()});
                         return null;
                     }
                     HttpEntity entity = response.getEntity();
                     if (Math.abs(pkg.getSize() - entity.getContentLength()) > 1024) {
-                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, 
-                                "Error retrieving {0}; Expected size is not the same as download size", 
+                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE,
+                                "Error retrieving {0}; Expected size is not the same as download size",
                                 new Object[]{url});
                         return null;
                     }
@@ -167,20 +167,37 @@ public class PackageOps {
     }
 
     public static void relocatePackageFile(PackageType pkg, File destination) throws IOException {
-        String filename = pkg.getGroup().replaceAll("[^A-Za-z]", "_") + "-" + pkg.getDownloadName() + "-" + pkg.getVersion() + "-" + pkg.getSize();        
+        String filename = getPackageFileName(pkg);
         File packageFile = packageFiles.get(filename);
-        File target = new File(destination, filename);
+        File target = new File(destination, filename + ".zip");
         if (packageFile != null) {
             String tmpDir = System.getProperty("java.io.tmpdir");
             if (packageFile.getAbsolutePath().contains(tmpDir)) {
                 Files.move(packageFile.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE);
                 packageFiles.put(filename, target);
             } else {
-                Files.copy(packageFile.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE);                
+                Files.copy(packageFile.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE);
             }
         }
     }
-    
+
+    private static String getPackageFileName(PackageType pkg) {
+        return pkg.getGroup().replaceAll("[^A-Za-z]", "_") + "-"
+                + pkg.getDownloadName() + "-"
+                + pkg.getVersion() + "-"
+                + pkg.getSize();
+    }
+
+    public static void importLocalPackageFile(PackageType pkg, File parentFolder) throws IOException {
+        String filename = getPackageFileName(pkg);
+        File target = new File(parentFolder, filename + ".zip");
+        if (target.exists()) {
+            PackageContents contents = new PackageContents(target, pkg);
+            app.putPackageContents(pkg, contents);
+            packageFiles.put(filename, target);
+        }
+    }
+
     public static PackageContents getPackageContents(PackageType pkg, AuthHandler handler, DoubleProperty progress) throws IOException {
         int retries = 3;
         if (app.getPackageContents(pkg) == null && retries > 0) {
@@ -199,7 +216,7 @@ public class PackageOps {
                 }
             }
         }
-        return null;
+        return app.getPackageContents(pkg);
     }
 
     public static String getInformativeVersion(PackageType pkg) {

@@ -33,6 +33,10 @@ public class CrxPackage extends PackageType {
         return contents;
     }
     
+    public void setContents(PackageContents contents) {
+        this.contents = contents;
+    }
+    
     @Override
     public String getGroup() {
         return getMostRecent().getGroup();

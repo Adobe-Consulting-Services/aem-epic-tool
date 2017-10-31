@@ -161,7 +161,7 @@ public class PackageListController {
         if (evt.getButton() == MouseButton.PRIMARY && evt.getClickCount() == 2) {
             PackageType pkg = packageTable.getSelectionModel().getSelectedItem();
             if (pkg != null) {
-                EpicApp.openPackageDetails(pkg, loginHandler);
+                EpicApp.openPackageDetails(pkg, masterPackageList, loginHandler);
             }
         }
     }
@@ -182,8 +182,7 @@ public class PackageListController {
                 String url = loginHandler.getUrlBase() + "/crx/packmgr/service.jsp?cmd=ls";
                 HttpGet request = new HttpGet(url);
                 try (CloseableHttpResponse response = client.execute(request)) {
-                    packageListingResult = JAXB.unmarshal(response.getEntity().getContent(), CrxType.class);
-                    loadPackagesFromListing(packageListingResult);
+                    loadPackagesFromListing(JAXB.unmarshal(response.getEntity().getContent(), CrxType.class));
                 }
             } catch (IOException ex) {
                 Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, null, ex);
@@ -191,9 +190,12 @@ public class PackageListController {
         }).start();
     }
 
-    private void loadPackagesFromListing(CrxType packageListingResult) {
+    List<CrxPackage> masterPackageList = null;
+    
+    private void loadPackagesFromListing(CrxType result) {
+        packageListingResult = result;
         List<PackageType> rawList = packageListingResult.getResponse().getData().getPackages().getPackage();
-        ApplicationState.getInstance().prepareMasterList(rawList);
+        masterPackageList = ApplicationState.getInstance().prepareMasterList(rawList);
         Platform.runLater(this::applyFilters);
     }
 
@@ -258,7 +260,23 @@ public class PackageListController {
     }
 
     public void loadOfflineData(ActionEvent evt) {
-
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Import package list");
+        chooser.setInitialFileName("package_list.xml");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("XML Files", "*.xml"));
+        File importFile = chooser.showOpenDialog(null);
+        if (importFile != null && importFile.exists()) {
+            Platform.runLater(()->{
+                loadPackagesFromListing(JAXB.unmarshal(importFile, CrxType.class));
+                for (PackageType pkg : masterPackageList) {
+                    try {
+                        PackageOps.importLocalPackageFile(pkg, importFile.getParentFile());
+                    } catch (IOException ex) {
+                        Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+        }
     }
 
     Set<Function<CrxPackage, Boolean>> filters = new HashSet<>();
@@ -281,9 +299,9 @@ public class PackageListController {
     }
 
     private void applyFilters() {
-        if (ApplicationState.getInstance().getMasterList() != null) {
+        if (masterPackageList != null) {
             packageList.setAll(
-                    ApplicationState.getInstance().getMasterList().stream()
+                    masterPackageList.stream()
                             .filter(pkg -> filters.stream().allMatch(f -> f.apply(pkg)))
                             .collect(Collectors.toList())
             );

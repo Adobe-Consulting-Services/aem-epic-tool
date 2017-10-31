@@ -4,8 +4,10 @@ import com.adobe.acs.epic.controller.AppController;
 import com.adobe.acs.epic.controller.AuthHandler;
 import com.adobe.acs.epic.controller.PackageCompareController;
 import com.adobe.acs.epic.controller.PackageInfoController;
+import com.adobe.acs.epic.model.CrxPackage;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -26,7 +28,7 @@ public class EpicApp extends Application {
 
     private AppController appController;
 
-    public static void openPackageDetails(PackageType pkg, AuthHandler handler) {
+    public static void openPackageDetails(PackageType pkg, List<CrxPackage> packageList, AuthHandler handler) {
         try {
             FXMLLoader loader = new FXMLLoader(EpicApp.class.getResource("/fxml/PackageInfo.fxml"));
             loader.setResources(ApplicationState.getInstance().getResourceBundle());
@@ -40,7 +42,7 @@ public class EpicApp extends Application {
             popup.initOwner(applicationWindow);
 
             runnerActivityController.setAuthHandler(handler);
-            runnerActivityController.setPackage(pkg);
+            runnerActivityController.setPackage(pkg, packageList);
 
             popup.showAndWait();
         } catch (IOException ex) {

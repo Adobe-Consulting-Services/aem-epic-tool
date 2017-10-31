@@ -234,7 +234,7 @@ public class PackageInfoController {
     private PackageType pkg;
     private PackageContents pkgContents;
 
-    public void setPackage(PackageType pkg) {
+    public void setPackage(PackageType pkg, List<CrxPackage> allPackages) {
         this.pkg = pkg;
 
         groupLabel.setText(pkg.getGroup());
@@ -270,7 +270,7 @@ public class PackageInfoController {
         if (pkg instanceof CrxPackage) {
             currentPackage = (CrxPackage) pkg;
         } else {
-            currentPackage = ApplicationState.getInstance().getMasterList().stream()
+            currentPackage = allPackages.stream()
                     .filter(p -> p.getGroup().equals(pkg.getGroup())
                     && p.getName().equals(pkg.getName()))
                     .findFirst().orElse(null);
@@ -289,7 +289,7 @@ public class PackageInfoController {
         otherVersionsList.setOnMouseClicked(evt -> {
             if (evt.getButton() == MouseButton.PRIMARY && evt.getClickCount() == 2) {
                 String version = otherVersionsList.getSelectionModel().getSelectedItem();
-                EpicApp.openPackageDetails(currentPackage.getAllVersions().get(version), authHandler);
+                EpicApp.openPackageDetails(currentPackage.getAllVersions().get(version), allPackages, authHandler);
             }
         });
         otherVersionsList.setOnContextMenuRequested(evt -> {

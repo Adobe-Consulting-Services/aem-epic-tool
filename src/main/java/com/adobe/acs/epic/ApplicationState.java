@@ -71,9 +71,7 @@ public class ApplicationState {
         return i18n;
     }
 
-    private ArrayList<CrxPackage> masterList;
-
-    public void prepareMasterList(List<PackageType> rawList) {
+    public List<CrxPackage> prepareMasterList(List<PackageType> rawList) {
         Map<String, CrxPackage> allPackages = new HashMap<>();
         rawList.forEach(p -> {
             String key = p.getGroup() + "~!~" + p.getName();
@@ -82,13 +80,10 @@ public class ApplicationState {
             }
             allPackages.get(key).trackVersion(p);
         });
-        masterList = new ArrayList<>(allPackages.values());
+        List<CrxPackage> masterList = new ArrayList<>(allPackages.values());
         masterList.sort(PackageOps::orderPackagesByUnpacked);
-    }
-
-    public List<CrxPackage> getMasterList() {
         return masterList;
-    }    
+    }
 
     public void setAuthHandler(AuthHandler auth, int i) {
         synchronized (authHandlers) {

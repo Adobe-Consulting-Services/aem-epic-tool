@@ -43,6 +43,10 @@ public class PackageContents {
                         (k, v) -> k,
                         TreeMap::new));
         packageFile.close();
+        if (pkg instanceof CrxPackage) {
+            ((CrxPackage) pkg).setContents(this);
+        }
+        
     }
 
     public void withFileContents(String path, Consumer<InputStream> consumer) throws IOException {
