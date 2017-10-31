@@ -32,8 +32,12 @@ public class PackageComparison {
     );
 
     public void observe(PackageContents contents) {
-        contents.getFiles().values().forEach(this::observe);
-        comparedPackages.add(contents);
+        if (contents != null && contents.getFiles() != null) {
+            contents.getFiles().values().forEach(this::observe);
+            comparedPackages.add(contents);
+        } else {
+            throw new NullPointerException("Package contents null or not well-formed");
+        }
     }
 
     public void observe(FileContents contents) {
@@ -124,7 +128,7 @@ public class PackageComparison {
             "Last Unpacked", "Unpacked By"
         };
         DataUtils.addSheet("Summary", workbook, packages, headers,
-                pkg -> (char) ('A' + packages.indexOf(pkg)),
+                pkg -> getPackageShortLabel(packages.indexOf(pkg)),
                 PackageType::getGroup, PackageType::getName,
                 PackageType::getDownloadName, PackageType::getSize,
                 PackageOps::getInformativeVersion,
@@ -135,7 +139,7 @@ public class PackageComparison {
 
         headers = new String[packages.size() + 1];
         for (int i = 0; i < packages.size(); i++) {
-            headers[i + 1] = String.valueOf((char) ('A' + i));
+            headers[i + 1] = getPackageShortLabel(i);
         }
 
         headers[0] = "Path";
@@ -183,6 +187,16 @@ public class PackageComparison {
         workbook.write(out);
         out.flush();
         out.close();
+    }
+
+    private static String getPackageShortLabel(int index) {
+        if (index < 26) {
+            return String.valueOf((char) ('A' + ((char) index)));
+        } else {
+            char digit1 = (char) ('A' + (index / 26) - 1);
+            char digit2 = (char) ('A' + (index % 26));
+            return String.valueOf(new char[] {digit1, digit2});
+        }
     }
 
     private Map<String, Map<PackageContents, Integer>> getAllBaseCounts() {
