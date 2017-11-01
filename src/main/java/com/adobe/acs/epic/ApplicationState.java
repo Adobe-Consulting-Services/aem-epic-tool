@@ -15,6 +15,7 @@
  */
 package com.adobe.acs.epic;
 
+import com.adobe.acs.epic.util.PackageOps;
 import com.adobe.acs.epic.controller.AuthHandler;
 import com.adobe.acs.epic.model.CrxPackage;
 import com.adobe.acs.epic.model.PackageContents;
@@ -110,15 +111,15 @@ public class ApplicationState {
         return pkg.getGroup() + "~~~" + pkg.getDownloadName() + "~~~" + pkg.getVersion() + "~~~" + pkg.getSize();
     }
     
-    PackageContents getPackageContents(PackageType pkg) {
+    public PackageContents getPackageContents(PackageType pkg) {
         return cachedContents.get(getPackageContentsKey(pkg));
     }
 
-    void putPackageContents(PackageType pkg, PackageContents packageContents) {
+    public void putPackageContents(PackageType pkg, PackageContents packageContents) {
         cachedContents.put(getPackageContentsKey(pkg), packageContents);
     }
 
-    void clearPackageContents(PackageType pkg) {
+    public void clearPackageContents(PackageType pkg) {
         cachedContents.remove(getPackageContentsKey(pkg));
     }
 }

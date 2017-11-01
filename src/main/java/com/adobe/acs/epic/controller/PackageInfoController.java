@@ -4,7 +4,7 @@ import com.adobe.acs.epic.ApplicationState;
 import com.adobe.acs.epic.DataUtils;
 import static com.adobe.acs.epic.DataUtils.summarizeUserDateCombo;
 import com.adobe.acs.epic.EpicApp;
-import com.adobe.acs.epic.PackageOps;
+import com.adobe.acs.epic.util.PackageOps;
 import com.adobe.acs.epic.model.CrxPackage;
 import com.adobe.acs.epic.model.PackageContents;
 import com.adobe.acs.model.pkglist.PackageType;

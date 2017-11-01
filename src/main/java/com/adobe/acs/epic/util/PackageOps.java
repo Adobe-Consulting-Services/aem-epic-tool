@@ -1,5 +1,6 @@
-package com.adobe.acs.epic;
+package com.adobe.acs.epic.util;
 
+import com.adobe.acs.epic.ApplicationState;
 import static com.adobe.acs.epic.DataUtils.compareDates;
 import com.adobe.acs.epic.controller.AppController;
 import com.adobe.acs.epic.controller.AuthHandler;

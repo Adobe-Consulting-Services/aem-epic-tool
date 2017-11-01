@@ -17,6 +17,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import javax.xml.bind.JAXB;
+import javax.xml.parsers.ParserConfigurationException;
+import org.apache.poi.util.SAXHelper;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import com.adobe.acs.epic.util.JcrNodeContentHandler;
 
 /**
  * Represents everything inside of an actual package file
@@ -31,10 +39,12 @@ public class PackageContents {
     private final Map<String, Set<String>> filesByType = new TreeMap<>();
     private final PackageType pkg;
 
+    private final ZipFile packageFile;
+
     public PackageContents(File targetFile, PackageType pkg) throws IOException {
         this.pkg = pkg;
         file = targetFile;
-        ZipFile packageFile = new ZipFile(targetFile);
+        packageFile = new ZipFile(targetFile);
         files = DataUtils.enumerationAsStream(packageFile.entries())
                 .peek(this::observeFileEntry)
                 .collect(Collectors.toMap(
@@ -46,7 +56,7 @@ public class PackageContents {
         if (pkg instanceof CrxPackage) {
             ((CrxPackage) pkg).setContents(this);
         }
-        
+
     }
 
     public void withFileContents(String path, Consumer<InputStream> consumer) throws IOException {
@@ -86,31 +96,42 @@ public class PackageContents {
                 getBaseCounts().put(base, getBaseCounts().get(base) + 1);
             }
             String fileName = parts[parts.length - 1];
-            String type;
+            String type = null;
             if (!parts[0].equals("jcr_root")) {
                 type = "VLT Metadata";
             } else if (fileName.equalsIgnoreCase("_rep_policy.xml")) {
                 type = "rep:policy";
             } else if (fileName.equalsIgnoreCase(".content.xml")) {
-                if (filePath.contains("jcr_root/home/users/")) {
-                    type = "user";
-                } else if (filePath.contains("jcr_root/home/groups/")) {
-                    type = "group";
-                } else if (filePath.contains("jcr_root/_oak_index")) {
-                    type = "oak index definition";
-                } else {
-                    type = "node metadata";
-                }
+                folderCount--;
+                determineTypesInXMLFile(entry);
+            } else if (fileName.endsWith(".xml")) {
+                determineTypesInXMLFile(entry);
+
+//                if (filePath.contains("jcr_root/home/users/")) {
+//                    type = "user";
+//                } else if (filePath.contains("jcr_root/home/groups/")) {
+//                    type = "group";
+//                } else if (filePath.contains("jcr_root/_oak_index")) {
+//                    type = "oak index definition";
+//                } else {
+//                    type = "node metadata";
+//                }
             } else {
                 type = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase() : "unknown";
             }
+            trackFilesByType(type, filePath);
+        }
+    }
+
+    private void trackFilesByType(String type, String filePath) {
+        if (type != null) {
             if (!filesByType.containsKey(type)) {
                 filesByType.put(type, new TreeSet<>());
             }
             filesByType.get(type).add(filePath);
         }
     }
-    
+
     public PackageType getSourcePackage() {
         return pkg;
     }
@@ -142,12 +163,35 @@ public class PackageContents {
     public Map<String, FileContents> getFiles() {
         return files;
     }
-    
+
     public Map<String, Set<String>> getFilesByType() {
         return filesByType;
     }
 
     public File getFile() {
         return file;
+    }
+
+    JcrNodeContentHandler jcrContentHandler = new JcrNodeContentHandler();
+
+    private void determineTypesInXMLFile(ZipEntry entry) {
+        if (entry.getSize() > 0) {
+            try {
+                XMLReader reader = SAXHelper.newXMLReader();
+                jcrContentHandler.setLocation(entry.getName()
+                        .replaceAll(Pattern.quote("/.content.xml"),"")
+                        .replaceAll("jcr_root", ""));
+                reader.setContentHandler(jcrContentHandler);
+                reader.parse(new InputSource(packageFile.getInputStream(entry)));
+                jcrContentHandler.getTypesFound().forEach((type, paths) -> {
+                    paths.forEach(path -> trackFilesByType(type, entry.getName() + "/" + path));
+                });
+            } catch (SAXException | ParserConfigurationException | IOException ex) {
+                Logger.getLogger(PackageContents.class.getName()).log(
+                        Level.SEVERE,
+                        "Error parsing entry " + entry.getName()
+                        + " in archive " + packageFile.getName(), ex);
+            }
+        }
     }
 }

@@ -18,7 +18,7 @@ package com.adobe.acs.epic.controller;
 import com.adobe.acs.epic.ApplicationState;
 import com.adobe.acs.epic.DataUtils;
 import com.adobe.acs.epic.EpicApp;
-import com.adobe.acs.epic.PackageOps;
+import com.adobe.acs.epic.util.PackageOps;
 import com.adobe.acs.epic.model.CrxPackage;
 import com.adobe.acs.epic.model.PackageComparison;
 import com.adobe.acs.model.pkglist.CrxType;

@@ -3,7 +3,7 @@
  */
 package com.adobe.acs.epic.controller;
 
-import com.adobe.acs.epic.PackageOps;
+import com.adobe.acs.epic.util.PackageOps;
 import com.adobe.acs.epic.model.PackageComparison;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.IOException;
