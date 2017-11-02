@@ -1,7 +1,7 @@
 package com.adobe.acs.epic.model;
 
-import com.adobe.acs.epic.DataUtils;
 import com.adobe.acs.epic.util.PackageOps;
+import com.adobe.acs.epic.util.ReportUtil;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,6 +66,9 @@ public class PackageComparison {
     public Map<String, Map<Long, Set<FileContents>>> getOverlaps(boolean ignoreSimilarFiles) {
         return comparison.entrySet().stream()
                 .filter((e) -> {
+                    if (e.getKey().startsWith("META-INF/")) {
+                        return false;
+                    }
                     Map<Long, Set<FileContents>> versions = e.getValue();
                     return versions.size() > 1 || (!ignoreSimilarFiles
                             && versions.get(versions.keySet().iterator().next()).size() > 1);
@@ -103,6 +106,9 @@ public class PackageComparison {
     public List<String> getCommonFiles() {
         return comparison.entrySet().stream()
                 .filter((e) -> {
+                    if (e.getKey().startsWith("META-INF/")) {
+                        return false;
+                    }
                     Map<Long, Set<FileContents>> versions = e.getValue();
                     if (versions.size() > 1) {
                         return false;
@@ -127,7 +133,7 @@ public class PackageComparison {
             "Last Modified", "Modified By",
             "Last Unpacked", "Unpacked By"
         };
-        DataUtils.addSheet("Summary", workbook, packages, headers,
+        ReportUtil.addSheet("Summary", workbook, packages, headers,
                 pkg -> getPackageShortLabel(packages.indexOf(pkg)),
                 PackageType::getGroup, PackageType::getName,
                 PackageType::getDownloadName, PackageType::getSize,
@@ -147,11 +153,11 @@ public class PackageComparison {
                 = new Function[packages.size() + 1];
         cols[0] = e -> e.getKey();
         IntStream.range(0, contents.size()).forEach(i -> cols[i + 1] = e -> e.getValue().get(contents.get(i)));
-        DataUtils.addSheet("Root paths", workbook, getAllBaseCounts().entrySet(), headers, cols);
+        ReportUtil.addSheet("Root paths", workbook, getAllBaseCounts().entrySet(), headers, cols);
 
         headers[0] = "Type";
         IntStream.range(0, contents.size()).forEach(i -> cols[i + 1] = e -> e.getValue().get(contents.get(i)));
-        DataUtils.addSheet("File types", workbook, getAllTypeCounts().entrySet(), headers, cols);
+        ReportUtil.addSheet("File types", workbook, getAllTypeCounts().entrySet(), headers, cols);
 
         headers[0] = "File path";
         Function<String, Object>[] commonCols
@@ -165,7 +171,7 @@ public class PackageComparison {
                 return allFiles.stream().map(FileContents::getPackageContents).filter(contents.get(i)::equals).count() > 0 ? "X" : null;
             }
         });
-        DataUtils.addSheet("Common files", workbook, getCommonFiles(), headers, commonCols);
+        ReportUtil.addSheet("Common files", workbook, getCommonFiles(), headers, commonCols);
 
         Function<Map.Entry<String, Map<Long, Set<FileContents>>>, Object>[] overlapCols = new Function[packages.size() + 1];
         overlapCols[0] = e -> e.getKey();
@@ -181,7 +187,7 @@ public class PackageComparison {
             }
             return null;
         });
-        DataUtils.addSheet("Changed files", workbook, getOverlaps(true).entrySet(), headers, overlapCols);
+        ReportUtil.addSheet("Changed files", workbook, getOverlaps(true).entrySet(), headers, overlapCols);
 
         FileOutputStream out = new FileOutputStream(saveFile);
         workbook.write(out);

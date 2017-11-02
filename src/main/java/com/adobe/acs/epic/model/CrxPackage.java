@@ -1,6 +1,6 @@
 package com.adobe.acs.epic.model;
 
-import com.adobe.acs.epic.DataUtils;
+import com.adobe.acs.epic.util.DataUtil;
 import com.adobe.acs.epic.util.PackageOps;
 import com.adobe.acs.epic.controller.AuthHandler;
 import com.adobe.acs.model.pkglist.PackageType;
@@ -114,7 +114,7 @@ public class CrxPackage extends PackageType {
             if (mostRecent == null) {
                 mostRecent = ver;
             } else {
-                if (DataUtils.compareDates(ver.getLastUnpacked(), mostRecent.getLastUnpacked()) < 0) {
+                if (DataUtil.compareDates(ver.getLastUnpacked(), mostRecent.getLastUnpacked()) < 0) {
                     mostRecent = ver;
                 }
             }

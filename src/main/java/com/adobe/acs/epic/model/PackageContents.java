@@ -1,6 +1,6 @@
 package com.adobe.acs.epic.model;
 
-import com.adobe.acs.epic.DataUtils;
+import com.adobe.acs.epic.util.DataUtil;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.File;
 import java.io.IOException;
@@ -17,10 +17,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import javax.xml.bind.JAXB;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.poi.util.SAXHelper;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -45,7 +43,7 @@ public class PackageContents {
         this.pkg = pkg;
         file = targetFile;
         packageFile = new ZipFile(targetFile);
-        files = DataUtils.enumerationAsStream(packageFile.entries())
+        files = DataUtil.enumerationAsStream(packageFile.entries())
                 .peek(this::observeFileEntry)
                 .collect(Collectors.toMap(
                         ZipEntry::getName,
@@ -62,7 +60,7 @@ public class PackageContents {
     public void withFileContents(String path, Consumer<InputStream> consumer) throws IOException {
         try (ZipFile packageFile = new ZipFile(file)) {
             Optional<? extends ZipEntry> entry
-                    = DataUtils.enumerationAsStream(packageFile.entries())
+                    = DataUtil.enumerationAsStream(packageFile.entries())
                             .filter(e -> e.getName().equals(path))
                             .findFirst();
             entry.ifPresent(e -> {

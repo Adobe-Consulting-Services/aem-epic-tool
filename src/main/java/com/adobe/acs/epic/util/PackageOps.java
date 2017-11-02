@@ -1,7 +1,7 @@
 package com.adobe.acs.epic.util;
 
 import com.adobe.acs.epic.ApplicationState;
-import static com.adobe.acs.epic.DataUtils.compareDates;
+import static com.adobe.acs.epic.util.DataUtil.compareDates;
 import com.adobe.acs.epic.controller.AppController;
 import com.adobe.acs.epic.controller.AuthHandler;
 import com.adobe.acs.epic.model.CrxPackage;

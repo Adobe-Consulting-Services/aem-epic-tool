@@ -1,12 +1,13 @@
 package com.adobe.acs.epic.controller;
 
 import com.adobe.acs.epic.ApplicationState;
-import com.adobe.acs.epic.DataUtils;
-import static com.adobe.acs.epic.DataUtils.summarizeUserDateCombo;
+import com.adobe.acs.epic.util.DataUtil;
+import static com.adobe.acs.epic.util.DataUtil.summarizeUserDateCombo;
 import com.adobe.acs.epic.EpicApp;
 import com.adobe.acs.epic.util.PackageOps;
 import com.adobe.acs.epic.model.CrxPackage;
 import com.adobe.acs.epic.model.PackageContents;
+import com.adobe.acs.epic.util.ReportUtil;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -157,7 +158,7 @@ public class PackageInfoController {
             String[] headers = new String[]{
                 "Root folder", "Count"
             };
-            DataUtils.exportSpreadsheet(out, pkgContents.getBaseCounts().entrySet(), headers,
+            ReportUtil.exportSpreadsheet(out, pkgContents.getBaseCounts().entrySet(), headers,
                     Map.Entry::getKey,
                     Map.Entry::getValue
             );
@@ -176,7 +177,7 @@ public class PackageInfoController {
             String[] headers = new String[]{
                 "Type", "Count"
             };
-            DataUtils.exportSpreadsheet(out, pkgContents.getFilesByType().entrySet(), headers,
+            ReportUtil.exportSpreadsheet(out, pkgContents.getFilesByType().entrySet(), headers,
                     Map.Entry::getKey,
                     e->e.getValue().size()
             );
@@ -241,7 +242,7 @@ public class PackageInfoController {
         packageLabel.setText(pkg.getName());
         downloadLinkLabel.setText(PackageOps.getDownloadLink(pkg, authHandler));
         versionLabel.setText(pkg.getVersion());
-        sizeLabel.setText(DataUtils.getHumanSize(pkg.getSize()) + " (" + pkg.getSize() + " bytes)");
+        sizeLabel.setText(DataUtil.getHumanSize(pkg.getSize()) + " (" + pkg.getSize() + " bytes)");
         createdLabel.setText(summarizeUserDateCombo(pkg.getCreated(), pkg.getCreatedBy()));
         modifiedLabel.setText(summarizeUserDateCombo(pkg.getLastModified(), pkg.getLastModified()));
         unpackedLabel.setText(summarizeUserDateCombo(pkg.getLastUnpacked(), pkg.getLastUnpackedBy()));

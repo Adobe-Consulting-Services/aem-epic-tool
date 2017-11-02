@@ -16,18 +16,18 @@
 package com.adobe.acs.epic.controller;
 
 import com.adobe.acs.epic.ApplicationState;
-import com.adobe.acs.epic.DataUtils;
+import com.adobe.acs.epic.util.DataUtil;
 import com.adobe.acs.epic.EpicApp;
 import com.adobe.acs.epic.util.PackageOps;
 import com.adobe.acs.epic.model.CrxPackage;
 import com.adobe.acs.epic.model.PackageComparison;
+import com.adobe.acs.epic.util.ReportUtil;
 import com.adobe.acs.model.pkglist.CrxType;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -112,9 +112,9 @@ public class PackageListController {
             return new ReadOnlyObjectWrapper(PackageOps.getInformativeVersion(cell.getValue()));
         });
         packageTable.getColumns().get(4).setCellValueFactory(new PropertyValueFactory<>("lastModified"));
-        packageTable.getColumns().get(4).setComparator(DataUtils::compareDates);
+        packageTable.getColumns().get(4).setComparator(DataUtil::compareDates);
         packageTable.getColumns().get(5).setCellValueFactory(new PropertyValueFactory<>("lastUnpacked"));
-        packageTable.getColumns().get(5).setComparator(DataUtils::compareDates);
+        packageTable.getColumns().get(5).setComparator(DataUtil::compareDates);
         packageTable.setOnMouseClicked(this::openProcessInfoDialog);
 
         showCustomPackages.selectedProperty().addListener(this::reapplyFiltersTriggered);
@@ -146,7 +146,7 @@ public class PackageListController {
                 "Last Modified", "Modified By",
                 "Last Unpacked", "Unpacked By"
             };
-            DataUtils.exportSpreadsheet(out, packageList, headers,
+            ReportUtil.exportSpreadsheet(out, packageList, headers,
                     PackageType::getGroup, PackageType::getName,
                     PackageType::getDownloadName, PackageType::getSize,
                     PackageOps::getInformativeVersion,
