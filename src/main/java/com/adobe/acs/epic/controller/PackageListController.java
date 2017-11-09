@@ -28,16 +28,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -51,6 +54,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
@@ -192,7 +196,7 @@ public class PackageListController {
     }
 
     List<CrxPackage> masterPackageList = null;
-    
+
     private void loadPackagesFromListing(CrxType result) {
         packageListingResult = result;
         List<PackageType> rawList = packageListingResult.getResponse().getData().getPackages().getPackage();
@@ -267,20 +271,41 @@ public class PackageListController {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("XML Files", "*.xml"));
         File importFile = chooser.showOpenDialog(null);
         if (importFile != null && importFile.exists()) {
-            Platform.runLater(()->{
-                loadPackagesFromListing(JAXB.unmarshal(importFile, CrxType.class));
-                for (PackageType pkg : masterPackageList) {
-                    try {
-                        PackageOps.importLocalPackageFile(pkg, importFile.getParentFile());
-                    } catch (IOException ex) {
-                        Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                
-                loginHandler.unbind();
-                connectionTab.setStyle("-fx-background-color:#f8f");
-                connectionTab.textProperty().unbind();
-                connectionTab.setText(importFile.getParentFile().getName()+ " (offline)");
+            loadPackagesFromListing(JAXB.unmarshal(importFile, CrxType.class));
+            Platform.runLater(() -> {
+                AtomicInteger completed = new AtomicInteger();
+
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.getButtonTypes().clear();
+                alert.setTitle("Loading offline data");
+                alert.setHeaderText("Extracting package information");
+                final ProgressIndicator progressIndicator = new ProgressIndicator();
+                progressIndicator.setPrefSize(200, 200);
+                alert.getDialogPane().setContent(progressIndicator);
+                Platform.runLater(alert::show);
+
+                masterPackageList.forEach(pkg -> {
+                    new Thread(() -> {
+                        try {
+                            PackageOps.importLocalPackageFile(pkg, importFile.getParentFile());
+                        } catch (IOException ex) {
+                            Logger.getLogger(PackageListController.class.getName()).log(Level.SEVERE, null, ex);
+                        } finally {
+                            Platform.runLater(() -> {
+                                double progress = ((double) completed.incrementAndGet()) / masterPackageList.size();
+                                progressIndicator.setProgress(progress);
+                                if (progress >= 0.99999) {
+                                    alert.getDialogPane().getButtonTypes().add(ButtonType.OK);
+                                    alert.close();
+                                    loginHandler.unbind();
+                                    connectionTab.setStyle("-fx-background-color:#f8f");
+                                    connectionTab.textProperty().unbind();
+                                    connectionTab.setText(importFile.getParentFile().getName() + " (offline)");
+                                }
+                            });
+                        }
+                    }).start();
+                });
             });
         }
     }
@@ -388,6 +413,7 @@ public class PackageListController {
     }
 
     Tab connectionTab;
+
     public void setTab(Tab tab) {
         connectionTab = tab;
     }
