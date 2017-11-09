@@ -18,7 +18,7 @@ public class ZipFullEntry {
 
     protected Supplier<Optional<InputStream>> contentsGetter;
     private ZipEntry entry;
-    final private boolean insideJar;
+    private boolean insideJar;
 
     public ZipFullEntry(ZipFile file, ZipEntry e) {
         insideJar = false;
@@ -33,8 +33,8 @@ public class ZipFullEntry {
         };
     }
 
-    public ZipFullEntry(ZipInputStream stream, ZipEntry e) {
-        insideJar = true;
+    public ZipFullEntry(ZipInputStream stream, ZipEntry e, boolean isParentJarFile) {
+        insideJar = isParentJarFile;
         entry = e;
         contentsGetter = () -> {
             try {

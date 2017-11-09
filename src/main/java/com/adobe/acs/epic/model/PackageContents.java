@@ -200,15 +200,13 @@ public class PackageContents {
     }
 
     private void determineTypesInZipFile(ZipFullEntry entry) {
-        try {
-            ZipInputStream bundle = new ZipInputStream(entry.getInputStream());
-            ZipEntry jarEntry;
-            while ((jarEntry = bundle.getNextEntry()) != null) {
-                ZipFullEntry jarFullEntry = new ZipFullEntry(bundle, jarEntry);
-                observeFileEntry(jarFullEntry);
-                subfiles.put(entry.getName() + "!" + jarFullEntry.getName(), new FileContents(jarFullEntry, this));
-            }
-            bundle.close();
+        try (ZipInputStream bundle = new ZipInputStream(entry.getInputStream())) {
+                ZipEntry jarEntry;
+                while ((jarEntry = bundle.getNextEntry()) != null) {
+                    ZipFullEntry jarFullEntry = new ZipFullEntry(bundle, jarEntry, entry.getName().endsWith(".jar"));
+                    observeFileEntry(jarFullEntry);
+                    subfiles.put(entry.getName() + "!" + jarFullEntry.getName(), new FileContents(jarFullEntry, this));
+                }
         } catch (IOException ex) {
             Logger.getLogger(PackageContents.class.getName()).log(Level.SEVERE, null, ex);
         }
