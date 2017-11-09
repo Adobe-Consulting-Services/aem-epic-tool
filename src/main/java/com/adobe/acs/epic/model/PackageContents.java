@@ -98,14 +98,14 @@ public class PackageContents {
             String type = null;
             if (!entry.isJarEntry() && !parts[0].equals("jcr_root")) {
                 type = "VLT Metadata";
-            } else if (fileName.equalsIgnoreCase("_rep_policy.xml")) {
+            } else if (!entry.isJarEntry() && fileName.equalsIgnoreCase("_rep_policy.xml")) {
                 type = "rep:policy";
-            } else if (fileName.equalsIgnoreCase(".content.xml")) {
+            } else if (!entry.isJarEntry() && fileName.equalsIgnoreCase(".content.xml")) {
                 folderCount--;
                 determineTypesInXMLFile(entry);
             } else if (fileName.endsWith(".jar")) {
                 determineTypesInZipFile(entry);
-            } else if (fileName.endsWith(".xml")) {
+            } else if (!entry.isJarEntry() && fileName.endsWith(".xml")) {
                 determineTypesInXMLFile(entry);
 
 //                if (filePath.contains("jcr_root/home/users/")) {
