@@ -1,7 +1,5 @@
 package com.adobe.acs.epic.model;
 
-import java.util.zip.ZipEntry;
-
 /**
  * Abstraction of file contents (cached copy of zip entry information)
  */
@@ -13,7 +11,7 @@ public class FileContents {
     private final boolean directory;
     private final PackageContents pkg;
     
-    public FileContents(ZipEntry source, PackageContents pkg) {
+    public FileContents(ZipFullEntry source, PackageContents pkg) {
         fileSize = source.getSize();
         path = source.getName();
         filename = path.substring(path.lastIndexOf('/')+1);

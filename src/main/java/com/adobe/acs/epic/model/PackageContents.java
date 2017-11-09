@@ -4,13 +4,10 @@ import com.adobe.acs.epic.util.DataUtil;
 import com.adobe.acs.model.pkglist.PackageType;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -23,17 +20,19 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import com.adobe.acs.epic.util.JcrNodeContentHandler;
+import java.util.zip.ZipInputStream;
 
 /**
  * Represents everything inside of an actual package file
  */
 public class PackageContents {
 
-    private File file;
+    private final File file;
     private int folderCount;
     private int fileCount;
     private final Map<String, Integer> baseCounts = new TreeMap<>();
     private final Map<String, FileContents> files;
+    private final Map<String, FileContents> subfiles;
     private final Map<String, Set<String>> filesByType = new TreeMap<>();
     private final PackageType pkg;
 
@@ -43,13 +42,16 @@ public class PackageContents {
         this.pkg = pkg;
         file = targetFile;
         packageFile = new ZipFile(targetFile);
+        subfiles = new TreeMap<>();
         files = DataUtil.enumerationAsStream(packageFile.entries())
+                .map(entry -> new ZipFullEntry(packageFile, entry))
                 .peek(this::observeFileEntry)
                 .collect(Collectors.toMap(
-                        ZipEntry::getName,
+                        ZipFullEntry::getName,
                         e -> new FileContents(e, this),
                         (k, v) -> k,
                         TreeMap::new));
+        files.putAll(subfiles);
         packageFile.close();
         if (pkg instanceof CrxPackage) {
             ((CrxPackage) pkg).setContents(this);
@@ -57,23 +59,22 @@ public class PackageContents {
 
     }
 
-    public void withFileContents(String path, Consumer<InputStream> consumer) throws IOException {
-        try (ZipFile packageFile = new ZipFile(file)) {
-            Optional<? extends ZipEntry> entry
-                    = DataUtil.enumerationAsStream(packageFile.entries())
-                            .filter(e -> e.getName().equals(path))
-                            .findFirst();
-            entry.ifPresent(e -> {
-                try {
-                    consumer.accept(packageFile.getInputStream(e));
-                } catch (IOException ex) {
-                    Logger.getLogger(PackageContents.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            });
-        }
-    }
-
-    private void observeFileEntry(ZipEntry entry) {
+//    public void withFileContents(String path, Consumer<InputStream> consumer) throws IOException {
+//        try (ZipFile zipFile = new ZipFile(file)) {
+//            Optional<? extends ZipEntry> entry
+//                    = DataUtil.enumerationAsStream(zipFile.entries())
+//                            .filter(e -> e.getName().equals(path))
+//                            .findFirst();
+//            entry.ifPresent(e -> {
+//                try {
+//                    consumer.accept(zipFile.getInputStream(e));
+//                } catch (IOException ex) {
+//                    Logger.getLogger(PackageContents.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//            });
+//        }
+//    }
+    private void observeFileEntry(ZipFullEntry entry) {
         if (entry.isDirectory()) {
             folderCount++;
         } else {
@@ -95,13 +96,15 @@ public class PackageContents {
             }
             String fileName = parts[parts.length - 1];
             String type = null;
-            if (!parts[0].equals("jcr_root")) {
+            if (!entry.isJarEntry() && !parts[0].equals("jcr_root")) {
                 type = "VLT Metadata";
             } else if (fileName.equalsIgnoreCase("_rep_policy.xml")) {
                 type = "rep:policy";
             } else if (fileName.equalsIgnoreCase(".content.xml")) {
                 folderCount--;
                 determineTypesInXMLFile(entry);
+            } else if (fileName.endsWith(".jar")) {
+                determineTypesInZipFile(entry);
             } else if (fileName.endsWith(".xml")) {
                 determineTypesInXMLFile(entry);
 
@@ -116,6 +119,9 @@ public class PackageContents {
 //                }
             } else {
                 type = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase() : "unknown";
+                if (entry.isJarEntry()) {
+                    type = "JAR Entry;" + type;
+                }
             }
             trackFilesByType(type, filePath);
         }
@@ -172,15 +178,15 @@ public class PackageContents {
 
     JcrNodeContentHandler jcrContentHandler = new JcrNodeContentHandler();
 
-    private void determineTypesInXMLFile(ZipEntry entry) {
+    private void determineTypesInXMLFile(ZipFullEntry entry) {
         if (entry.getSize() > 0) {
             try {
                 XMLReader reader = SAXHelper.newXMLReader();
                 jcrContentHandler.setLocation(entry.getName()
-                        .replaceAll(Pattern.quote("/.content.xml"),"")
+                        .replaceAll(Pattern.quote("/.content.xml"), "")
                         .replaceAll("jcr_root", ""));
                 reader.setContentHandler(jcrContentHandler);
-                reader.parse(new InputSource(packageFile.getInputStream(entry)));
+                reader.parse(new InputSource(entry.getInputStream()));
                 jcrContentHandler.getTypesFound().forEach((type, paths) -> {
                     paths.forEach(path -> trackFilesByType(type, entry.getName() + "/" + path));
                 });
@@ -190,6 +196,21 @@ public class PackageContents {
                         "Error parsing entry " + entry.getName()
                         + " in archive " + packageFile.getName(), ex);
             }
+        }
+    }
+
+    private void determineTypesInZipFile(ZipFullEntry entry) {
+        try {
+            ZipInputStream bundle = new ZipInputStream(entry.getInputStream());
+            ZipEntry jarEntry;
+            while ((jarEntry = bundle.getNextEntry()) != null) {
+                ZipFullEntry jarFullEntry = new ZipFullEntry(bundle, jarEntry);
+                observeFileEntry(jarFullEntry);
+                subfiles.put(entry.getName() + "!" + jarFullEntry.getName(), new FileContents(jarFullEntry, this));
+            }
+            bundle.close();
+        } catch (IOException ex) {
+            Logger.getLogger(PackageContents.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }
