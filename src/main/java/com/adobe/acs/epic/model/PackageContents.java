@@ -20,6 +20,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import com.adobe.acs.epic.util.JcrNodeContentHandler;
+import java.io.InputStream;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -200,15 +201,20 @@ public class PackageContents {
     }
 
     private void determineTypesInZipFile(ZipFullEntry entry) {
-        try (ZipInputStream bundle = new ZipInputStream(entry.getInputStream())) {
+        InputStream in = entry.getInputStream();
+        if (in == null) {
+                Logger.getLogger(PackageContents.class.getName()).log(Level.SEVERE, "No file contents provided for {0}", entry.getName());
+        } else {
+            try (ZipInputStream bundle = new ZipInputStream(in)) {
                 ZipEntry jarEntry;
                 while ((jarEntry = bundle.getNextEntry()) != null) {
                     ZipFullEntry jarFullEntry = new ZipFullEntry(bundle, jarEntry, entry.getName().endsWith(".jar"));
                     observeFileEntry(jarFullEntry);
                     subfiles.put(entry.getName() + "!" + jarFullEntry.getName(), new FileContents(jarFullEntry, this));
                 }
-        } catch (IOException ex) {
-            Logger.getLogger(PackageContents.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(PackageContents.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 }

@@ -40,6 +40,9 @@ public class ZipFullEntry {
             try {
                 long size = e.getSize();
                 // Note: This will fail to properly read 2gb+ files, but we have other problems if that's in this JAR file.
+                if (size <= 0) {
+                    return Optional.empty();
+                }
                 byte[] buffer = new byte[(int) size];
                 stream.read(buffer);
                 return Optional.of(new ByteInputStream(new byte[(int) e.getSize()], buffer.length));
