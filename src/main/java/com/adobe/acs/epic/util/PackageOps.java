@@ -16,11 +16,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -112,59 +112,80 @@ public class PackageOps {
                 File targetFile = File.createTempFile(filename, ".zip");
                 targetFile.deleteOnExit();
                 String url = getDownloadLink(pkg, authHandler);
-                HttpGet request = new HttpGet(url);
-                try (CloseableHttpResponse response = client.execute(request)) {
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode < 200 || statusCode > 299) {
-                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE,
-                                "Error retrieving {0}; Status code: {1}; Reason: {2}",
-                                new Object[]{url, statusCode, response.getStatusLine().getReasonPhrase()});
-                        return null;
-                    }
-                    HttpEntity entity = response.getEntity();
-                    if (Math.abs(pkg.getSize() - entity.getContentLength()) > 1024) {
-                        Logger.getLogger(AppController.class.getName()).log(Level.SEVERE,
-                                "Error retrieving {0}; Expected size is not the same as download size",
-                                new Object[]{url});
-                        return null;
-                    }
-                    if (entity != null) {
-                        InputStream inputStream = entity.getContent();
-                        try (OutputStream outputStream = new FileOutputStream(targetFile)) {
-                            long fileSize = entity.getContentLength();
-                            long downloaded = 0;
-                            BufferedInputStream in = new BufferedInputStream(inputStream);
-                            BufferedOutputStream out = new BufferedOutputStream(outputStream);
-                            byte[] buffer = new byte[1024];
-                            int size;
-                            int updateCounter = 0;
-                            while ((size = in.read(buffer)) > 0) {
-                                downloaded += size;
-                                out.write(buffer, 0, size);
-                                if (progress != null && (++updateCounter % 16) == 0) {
-                                    final double newProgress = (double) downloaded / (double) fileSize;
-                                    Platform.runLater(()
-                                            -> progress.set(newProgress)
-                                    );
-                                }
-                            }
-                            out.flush();
-                            outputStream.flush();
-                            outputStream.close();
-                            inputStream.close();
-                            response.close();
-                            packageFiles.put(filename, targetFile);
+                retry(3, () -> {
+                    HttpGet request = new HttpGet(url);
+                    try (CloseableHttpResponse response = client.execute(request)) {
+                        int statusCode = response.getStatusLine().getStatusCode();
+                        if (statusCode < 200 || statusCode > 299) {
+                            Logger.getLogger(AppController.class.getName()).log(Level.SEVERE,
+                                    "Error retrieving {0}; Status code: {1}; Reason: {2}",
+                                    new Object[]{url, statusCode, response.getStatusLine().getReasonPhrase()});
+                            return null;
                         }
+                        HttpEntity entity = response.getEntity();
+                        if (Math.abs(pkg.getSize() - entity.getContentLength()) > 1024) {
+                            Logger.getLogger(AppController.class.getName()).log(Level.SEVERE,
+                                    "Error retrieving {0}; Expected size is not the same as download size",
+                                    new Object[]{url});
+                            return null;
+                        }
+                        if (entity != null) {
+                            InputStream inputStream = entity.getContent();
+                            try (OutputStream outputStream = new FileOutputStream(targetFile)) {
+                                long fileSize = entity.getContentLength();
+                                long downloaded = 0;
+                                BufferedInputStream in = new BufferedInputStream(inputStream);
+                                BufferedOutputStream out = new BufferedOutputStream(outputStream);
+                                byte[] buffer = new byte[1024];
+                                int size;
+                                int updateCounter = 0;
+                                while ((size = in.read(buffer)) > 0) {
+                                    downloaded += size;
+                                    out.write(buffer, 0, size);
+                                    if (progress != null && (++updateCounter % 16) == 0) {
+                                        final double newProgress = (double) downloaded / (double) fileSize;
+                                        Platform.runLater(()
+                                                -> progress.set(newProgress)
+                                        );
+                                    }
+                                }
+                                out.flush();
+                                outputStream.flush();
+                                outputStream.close();
+                                inputStream.close();
+                                response.close();
+                                packageFiles.put(filename, targetFile);
+                            } catch (IOException ex) {
+                                return ex;
+                            }
+                        }
+                        return null;
+                    } catch (IOException ex) {
+                        Logger.getLogger(PackageOps.class.getName()).log(Level.SEVERE, "Error downloading package " + url, ex);
+                        return ex;
                     }
-                }
-            } catch (IOException ex) {
-                Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, null, ex);
+                });
+            } catch (Exception ex) {
+                Logger.getLogger(AppController.class.getName()).log(Level.SEVERE, "Unable to downlaod package after 3 attempts", ex);
+            }
+            if (progress != null) {
+                Platform.runLater(() -> progress.set(1.0));
             }
         }
-        if (progress != null) {
-            Platform.runLater(() -> progress.set(1.0));
-        }
         return packageFiles.get(filename);
+    }
+
+    public static void retry(int tries, Supplier<Exception> action) throws Exception {
+        Exception ex = null;
+        for (int i = 0; i < tries; i++) {
+            ex = action.get();
+            if (ex == null) {
+                return;
+            }
+        }
+        if (ex != null) {
+            throw ex;
+        }
     }
 
     public static void relocatePackageFile(PackageType pkg, File destination) throws IOException {
